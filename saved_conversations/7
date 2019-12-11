@@ -1,0 +1,9 @@
+bot : Hi There! I am a medical chatbot. You can begin conversation by typing in a message and pressing enter.
+user : my name is arvind sisodiya
+bot : - okay, did you get hurt, or it is a suddern paining.
+user : i am feeling headache
+bot : - This is a symptom of fever, you should take a tablet of crocin after you have your meal.
+user : types of headaches
+bot : - what kind of headache do you have : 1. Migrane headache - intense throbbing pain on just one side of the head. 2. Cluster headaches - severe and recurrent headaches 3. Tension Headache - Ocassional;
+user : i am feeling cold
+bot : - This might be because you are tired, you should take some rest.

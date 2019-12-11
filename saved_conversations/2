@@ -1,0 +1,11 @@
+bot : Hi There! I am a medical chatbot. You can begin conversation by typing in a message and pressing enter.
+user : my name is yogesh
+bot : - Hello! your name has been stored. What is your age?
+user : hello
+bot : - Hi. How are you feeling today?
+user : i am 19 years old, am good
+bot : - you shall be called once the doctor is available. Do you want to book an appointment?
+user : i am good
+bot : - good to know. how may i assist you then?
+user : but i have some issues with my head
+bot : - symptom noted. Attacks tend to occur in daily clusters that can persist for weeks or months. They typically take place at the same time of day, which can often be a couple of hours after falling asleep at night. would you like to talk to a doctor?

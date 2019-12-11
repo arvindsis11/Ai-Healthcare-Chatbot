@@ -1,0 +1,12 @@
+- - is a doctor available ?
+  - sorry, all doctors are occupied at the moment. We will connect you to a doctor soon. Do you want to book an appointment?
+- - hi can i see a doctor ?
+  - all doctors are attending patients. we shall revert to your request soon. Do you want to book an appointment?
+- - i want to talk to a doctor
+  - you shall be called once the doctor is available. Do you want to book an appointment?
+- - can you book an apointment with a doctor?
+  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+- - Patient Name Date Time Doctor Hospital
+  - appointment details saved. you shall be contacted shortly.
+- - thanks
+  - happy to help!

@@ -1,0 +1,19 @@
+bot : Hi There! I am a medical chatbot. You can begin conversation by typing in a message and pressing enter.
+user : my name is arvind sisodiya
+bot : - okay, did you get hurt, or it is a suddern paining.
+user : i am feeling headache
+bot : - This is a symptom of fever, you should take a tablet of crocin after you have your meal.
+user : uhuh
+bot : - hi. How are you feeling today?
+user : hii dude
+bot : - hi. How are you feeling today?
+user : feeling very bad
+bot : - This is a symptom of fever, you should take a tablet of crocin after you have your meal.
+user : feeling hot\
+bot : - good to know. how may i assist you then?
+user : 
+bot : - all doctors are attending patients. we shall revert to your request soon. Do you want to book an appointment?
+user : feeling back pain
+bot : - good to know. how may i assist you then?
+user : sure
+bot : - I was created in February 2019.

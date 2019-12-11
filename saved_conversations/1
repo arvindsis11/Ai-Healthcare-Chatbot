@@ -1,0 +1,25 @@
+bot : Hi There! I am a medical chatbot. You can begin conversation by typing in a message and pressing enter.
+user : my name is atulya
+bot : - Hello! your name has been stored. What is your age?
+user : my age is 20
+bot : - okay. your age has been stored. Which city do you live in?
+user : i live in mumbai
+bot : - okay location stored. Welcome to medical portal. Say Hi!
+user : Hi
+bot : - Hello. How are you feeling today?
+user : i feel sick
+bot : - okay. can you tell me what's wrong? what are your symptoms?
+user : i have a headache
+bot : - what kind of headache do you have : 1. Migrane headache - intense throbbing pain on just one side of the head. 2. Cluster headaches - severe and recurrent headaches 3. Tension Headache - Ocassional;
+user : cluster headache
+bot : - symptom noted. Attacks tend to occur in daily clusters that can persist for weeks or months. They typically take place at the same time of day, which can often be a couple of hours after falling asleep at night. would you like to talk to a doctor?
+user : yes i'd like to talk to a doctor
+bot : - you shall be called once the doctor is available. Do you want to book an appointment?
+user : yes book an appointment for me
+bot : - yes please state time and doctor's name in the following format; 'Patient Name: Date: Doctor: Hospital:'
+user : Patient Name: Atulya Date: 05.03.17 Doctor: Yogesh Hospital: Hiranandani
+bot : - appointment details saved. you shall be contacted shortly.
+user : thanks
+bot : - happy to help!
+user : Bye
+bot : - Bye. Nice talking to you

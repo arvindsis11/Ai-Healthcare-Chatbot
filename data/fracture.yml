@@ -1,0 +1,26 @@
+- - my hand is aching.
+  - okay, did you get hurt, or it is a suddern aching.
+- - my leg is aching.
+  - okay, did you get hurt, or it is a suddern aching.
+- - my joint is aching.
+  - okay, did you get hurt, or it is a suddern aching.
+- - yes i got hurt.
+  - ok, is there a swelling or a physical deformity or bleeding at the aching region. 
+- - it is a mild ache.
+  - ok, is there a swelling or a physical deformity or bleeding at the aching region.
+- - yes there is a swelling
+  - okay, it is a common symptom of fracture, should I book an an appointment for you.
+- - yes there is a physical deformity.
+  - okay, it is a common symptom of fracture, should I book an an appointment for you.
+- - yes it is bleeding.
+  - okay, it is a common symptom of fracture, should I book an an appointment for you.
+- - yes i want to book an appointment.
+  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+- - my hand is paining.
+  - okay, did you get hurt, or it is a suddern paining.
+- - my leg is paining.
+  - okay, did you get hurt, or it is a suddern paining.
+- - my joint is paining.
+  - okay, did you get hurt, or it is a suddern paining.
+- - yes i got hurt.
+  
