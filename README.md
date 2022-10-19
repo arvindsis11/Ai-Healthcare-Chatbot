@@ -11,6 +11,30 @@ SQLAlchemy==1.1.11
  2. Run *train.py*
  3. Run *run.py*
  4. Demo will be live at http://localhost:5000/
+ 
+ ## Git push cmd- for reference
+ ```java
+ echo "# MyRestApi all crud operations using spring boot framework" >> README.md
+git init
+git add .
+git commit -m "initial commit"
+git branch -M main
+git remote add origin https://github.com/arvindsis11/MyRestApi.git
+git push -u origin main
+git rm -r --cached .
+////////////////////////////////////////
+or push an existing repository from the command line
+git remote add origin https://github.com/arvindsis11/springJPAdemo.git
+git branch -M main
+git push -u origin main
+https://github.com/arvindsis11/angular-todomanagement-app.git
+/////////////////////////////////////
+common git error:
+use this:
+git pull --rebase origin main
+git push origin main
+url:https://stackoverflow.com/questions/24114676/git-error-failed-to-push-some-refs-to-remote
+ ```
 
 ## License
 This source is free to use, but ChatterBot does have a license which still applies and can be found on the [LICENSE](https://github.com/gunthercox/ChatterBot/blob/master/LICENSE) page.
