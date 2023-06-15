@@ -1,7 +1,8 @@
 # Used by pip to install required python packages
 # Usage: pip install -r requirements.txt
 
-Flask==0.12.3
-chatterbot==0.8.4
-SQLAlchemy==1.1.11
-gunicorn==19.10.0
+Flask==2.0.1
+chatterbot==1.0.4
+SQLAlchemy
+gunicorn==20.1.0
+
