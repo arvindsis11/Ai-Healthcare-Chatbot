@@ -1,62 +1,43 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-      .chat-container {
-        max-width: 500px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-      }
-
-      .user-text {
-        text-align: right;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
   </head>
   <body>
-    <div class="container">
-      <h1 class="text-center">AI-Healthcare Chatbot</h1>
-      <div class="chat-container">
-        <div id="chatbox">
-          <p class="botText"><span>Please try typing full sentences as I am still learning!</span></p>
-          <p class="botText"><span>I am a chatbot. You can begin conversation by typing in a message and pressing enter.</span></p>
-          <p class="botText"><span>Hi There! What is your name?</span></p>
-        </div>
-        <div id="userInput">
-          <input id="textInput" type="text" name="msg" class="form-control" placeholder="Message">
-          <input id="buttonInput" type="submit" class="btn btn-primary mt-2" value="Send">
-        </div>
+    <h1>AI-Healthcare Chatbot</h1>
+    <div>
+      <div id="chatbox">
+        <p class="botText"><span>Please try typing full sentences as I am still learning!</span></p>
+        <p class="botText"><span>I am a chatbot. You can begin conversation by typing in a message and pressing enter.</span></p>
+        <p class="botText"><span>Hi There! What is your name?</span></p>
       </div>
-    </div>
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      function getBotResponse() {
-        var rawText = $("#textInput").val();
-        var userHtml = '<p class="user-text"><span>' + rawText + '</span></p>';
-        $("#textInput").val("");
-        $("#chatbox").append(userHtml);
-        document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
-        $.get("/get", { msg: rawText }).done(function(data) {
-          var botHtml = '<p class="botText"><span>' + data + '</span></p>';
-          $("#chatbox").append(botHtml);
+      <div id="userInput">
+        <input id="textInput" type="text" name="msg" placeholder="Message">
+        <input id="buttonInput" type="submit" value="Send">
+      </div>
+      <script>
+        function getBotResponse() {
+          var rawText = $("#textInput").val();
+          var userHtml = '<p class="userText"><span>' + rawText + '</span></p>';
+          $("#textInput").val("");
+          $("#chatbox").append(userHtml);
           document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
-        });
-      }
-
-      $("#textInput").keypress(function(e) {
-        if (e.which == 13) {
-          getBotResponse();
+          $.get("/get", { msg: rawText }).done(function(data) {
+            var botHtml = '<p class="botText"><span>' + data + '</span></p>';
+            $("#chatbox").append(botHtml);
+            document.getElementById('userInput').scrollIntoView({block: 'start', behavior: 'smooth'});
+          });
         }
-      });
-
-      $("#buttonInput").click(function() {
-        getBotResponse();
-      });
-    </script>
+        $("#textInput").keypress(function(e) {
+            if(e.which == 13) {
+                getBotResponse();
+            }
+        });
+        $("#buttonInput").click(function() {
+          getBotResponse();
+        })
+      </script>
+    </div>
   </body>
 </html>
