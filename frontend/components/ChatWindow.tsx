@@ -108,6 +108,64 @@ export function ChatWindow() {
     }
   }
 
+  const handleSendMessage = async (message: string) => {
+    if (!message.trim()) return
+
+    // Add user message
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      content: message,
+      role: 'user',
+      timestamp: new Date(),
+    }
+
+    setChatState(prev => ({
+      ...prev,
+      messages: [...prev.messages, userMessage],
+      isLoading: true,
+      error: undefined,
+    }))
+
+    try {
+      // Send text message to API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      const data = await response.json()
+
+      // Add AI response
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        content: data.message,
+        role: 'assistant',
+        timestamp: new Date(),
+      }
+
+      setChatState(prev => ({
+        ...prev,
+        messages: [...prev.messages, assistantMessage],
+        isLoading: false,
+      }))
+
+    } catch (error) {
+      console.error('Chat error:', error)
+      setChatState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Failed to get response. Please try again.',
+      }))
+    }
+  }
+
   const playAudioResponse = async (audioUrl: string) => {
     try {
       const response = await fetch(audioUrl)
