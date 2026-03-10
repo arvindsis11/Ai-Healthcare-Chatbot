@@ -175,7 +175,26 @@ ws.onmessage = (event) => {
 }
 ```
 
-## 🎨 Customization
+## � Voice Interaction Features
+
+### Speech-to-Text
+- **Microphone Access**: Click the microphone button to start recording
+- **Visual Feedback**: Red recording indicator with timer
+- **Smart Processing**: Automatic audio upload and transcription
+- **Error Handling**: Clear feedback for microphone permission issues
+
+### Text-to-Speech
+- **Audio Playback**: Automatic playback of AI voice responses
+- **Visual Indicators**: Audio playback status in chat
+- **Natural Voice**: Professional healthcare assistant voice
+- **Background Playback**: Non-blocking audio experience
+
+### Voice Chat Flow
+1. Click microphone button (🎤)
+2. Speak your symptoms or question
+3. Click stop to send voice message
+4. AI processes speech → text → response → voice
+5. Listen to AI response automatically
 
 ### Theme Colors
 Modify `app/globals.css` to customize the color scheme:

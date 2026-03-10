@@ -14,6 +14,7 @@ export function ChatWindow() {
   })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
@@ -44,15 +45,15 @@ export function ChatWindow() {
     }
   }, [darkMode])
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendVoiceMessage = async (audioBlob: Blob) => {
+    // Add user voice message placeholder
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      content,
+      id: `voice-user-${Date.now()}`,
+      content: "🎤 Voice message sent",
       role: 'user',
       timestamp: new Date(),
     }
 
-    // Add user message
     setChatState(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage],
@@ -61,26 +62,33 @@ export function ChatWindow() {
     }))
 
     try {
-      // Simulate API call - replace with actual WebSocket/API call
-      const response = await fetch('/api/chat', {
+      // Create FormData for audio upload
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'voice-message.webm')
+
+      // Send voice message to API
+      const response = await fetch('/api/chat/voice', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: content }),
+        body: formData,
       })
 
       if (!response.ok) {
-        throw new Error('Failed to get response')
+        throw new Error('Failed to process voice message')
       }
 
       const data = await response.json()
 
+      // Add AI response
       const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
+        id: `voice-assistant-${Date.now()}`,
         content: data.message,
         role: 'assistant',
         timestamp: new Date(),
+      }
+
+      // Play audio response if available
+      if (data.audio_url) {
+        playAudioResponse(data.audio_url)
       }
 
       setChatState(prev => ({
@@ -88,13 +96,46 @@ export function ChatWindow() {
         messages: [...prev.messages, assistantMessage],
         isLoading: false,
       }))
+
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error('Voice message error:', error)
       setChatState(prev => ({
         ...prev,
         messages: [...prev.messages],
         isLoading: false,
-        error: 'Failed to send message. Please try again.',
+        error: 'Failed to process voice message. Please try again.',
+      }))
+    }
+  }
+
+  const playAudioResponse = async (audioUrl: string) => {
+    try {
+      const response = await fetch(audioUrl)
+      const audioBlob = await response.blob()
+      const audioUrlObj = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrlObj)
+
+      // Add visual indicator for audio playback
+      setChatState(prev => ({
+        ...prev,
+        isPlayingAudio: true,
+      }))
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrlObj)
+        setChatState(prev => ({
+          ...prev,
+          isPlayingAudio: false,
+        }))
+      }
+
+      await audio.play()
+
+    } catch (error) {
+      console.error('Audio playback error:', error)
+      setChatState(prev => ({
+        ...prev,
+        isPlayingAudio: false,
       }))
     }
   }
@@ -169,6 +210,18 @@ export function ChatWindow() {
             </div>
           )}
 
+          {/* Audio Playback Indicator */}
+          {isPlayingAudio && (
+            <div className="flex items-center space-x-2 text-blue-600">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-current rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              </div>
+              <span className="text-sm">🔊 Playing audio response...</span>
+            </div>
+          )}
+
           {/* Error Message */}
           {chatState.error && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-sm">
@@ -182,6 +235,7 @@ export function ChatWindow() {
         {/* Input Bar */}
         <InputBar
           onSendMessage={handleSendMessage}
+          onSendVoiceMessage={handleSendVoiceMessage}
           disabled={chatState.isLoading}
         />
       </div>

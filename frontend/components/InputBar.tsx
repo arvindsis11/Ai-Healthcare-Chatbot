@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { useVoiceRecording } from '@/lib/useVoiceRecording'
 
 interface InputBarProps {
   onSendMessage: (message: string) => void
+  onSendVoiceMessage?: (audioBlob: Blob) => void
   disabled?: boolean
 }
 
@@ -26,11 +28,13 @@ const SYMPTOM_SUGGESTIONS = [
   "How to prevent heart disease?"
 ]
 
-export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
+export function InputBar({ onSendMessage, onSendVoiceMessage, disabled = false }: InputBarProps) {
   const [input, setInput] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  const { isRecording, recordingTime, startRecording, stopRecording } = useVoiceRecording()
 
   // Filter suggestions based on input
   useEffect(() => {
@@ -45,6 +49,27 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
       setShowSuggestions(true)
     }
   }, [input])
+
+  // Recording timer
+  useEffect(() => {
+    if (isRecording) {
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1)
+      }, 1000)
+    } else {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+        recordingIntervalRef.current = null
+      }
+      setRecordingTime(0)
+    }
+
+    return () => {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+      }
+    }
+  }, [isRecording])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,6 +105,30 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
     adjustTextareaHeight()
   }, [input])
 
+  const handleVoiceButtonClick = async () => {
+    if (isRecording) {
+      // Stop recording and send voice message
+      const audioBlob = await stopRecording()
+      if (audioBlob && onSendVoiceMessage) {
+        onSendVoiceMessage(audioBlob)
+      }
+    } else {
+      // Start recording
+      try {
+        await startRecording()
+      } catch (error) {
+        console.error('Failed to start recording:', error)
+        alert('Could not access microphone. Please check permissions.')
+      }
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
   return (
     <div className="border-t border-border bg-background p-4">
       <div className="max-w-4xl mx-auto relative">
@@ -109,7 +158,7 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               placeholder="Describe your symptoms or ask a health question..."
-              disabled={disabled}
+              disabled={disabled || isRecording}
               className={cn(
                 "w-full resize-none rounded-lg border border-input bg-background px-4 py-3 text-sm",
                 "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring",
@@ -119,20 +168,56 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
               rows={1}
             />
 
+            {/* Recording Indicator */}
+            {isRecording && (
+              <div className="absolute inset-0 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center">
+                <div className="flex items-center space-x-3 text-red-600">
+                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">Recording... {formatTime(recordingTime)}</span>
+                </div>
+              </div>
+            )}
+
             {/* Character Count */}
-            {input.length > 0 && (
+            {input.length > 0 && !isRecording && (
               <div className="absolute bottom-2 right-3 text-xs text-muted-foreground">
                 {input.length}/1000
               </div>
             )}
           </div>
 
+          {/* Voice Button */}
+          <button
+            type="button"
+            onClick={handleVoiceButtonClick}
+            disabled={disabled}
+            className={cn(
+              "flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200",
+              isRecording
+                ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                : "bg-secondary hover:bg-secondary/80 text-secondary-foreground",
+              "disabled:opacity-50 disabled:cursor-not-allowed"
+            )}
+            title={isRecording ? "Stop recording" : "Start voice recording"}
+          >
+            {isRecording ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            )}
+          </button>
+
           {/* Send Button */}
           <button
             type="submit"
-            disabled={!input.trim() || disabled}
+            disabled={!input.trim() || disabled || isRecording}
             className={cn(
-              "flex items-center justify-center w-10 h-10 rounded-lg transition-colors",
+              "flex items-center justify-center w-12 h-12 rounded-lg transition-colors",
               "bg-primary text-primary-foreground hover:bg-primary/90",
               "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary"
             )}
@@ -140,7 +225,7 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
             {disabled ? (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             )}
@@ -149,7 +234,7 @@ export function InputBar({ onSendMessage, disabled = false }: InputBarProps) {
 
         {/* Helper Text */}
         <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-          <span>Press Enter to send, Shift+Enter for new line</span>
+          <span>Press Enter to send, Shift+Enter for new line • Click 🎤 to use voice</span>
           <span>💡 Try describing your symptoms for personalized advice</span>
         </div>
       </div>
