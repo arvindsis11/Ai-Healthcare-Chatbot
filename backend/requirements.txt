@@ -10,7 +10,7 @@ pydantic==2.5.0
 openai==1.3.7  # For Whisper API
 elevenlabs==0.2.27  # For Text-to-Speech
 pydub==0.25.1  # Audio processing
-python-multipart==0.0.6  # File uploads
+python-multipart==0.0.22  # File uploads
 
 # Data Processing
 pandas==2.1.4
