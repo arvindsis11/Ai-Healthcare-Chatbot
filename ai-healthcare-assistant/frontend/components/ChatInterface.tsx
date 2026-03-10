@@ -1,15 +1,25 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User } from 'lucide-react'
+import { Send, Bot, User, AlertTriangle, Info } from 'lucide-react'
 import MessageBubble from './MessageBubble'
 import ChatInput from './ChatInput'
+import SymptomAnalysis from './SymptomAnalysis'
+
+interface SymptomAnalysis {
+  symptoms: string[]
+  severity_score: number
+  risk_level: 'low' | 'medium' | 'high'
+  possible_conditions: string[]
+  urgency_recommendation: string
+}
 
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  symptom_analysis?: SymptomAnalysis
 }
 
 export default function ChatInterface() {
@@ -17,7 +27,7 @@ export default function ChatInterface() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hello! I\'m your AI healthcare assistant. How can I help you today?',
+      content: 'Hello! I\'m your AI healthcare assistant. I can help analyze your symptoms and provide general health information. Please describe what you\'re experiencing.',
       timestamp: new Date()
     }
   ])
@@ -64,7 +74,8 @@ export default function ChatInterface() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response,
-        timestamp: new Date()
+        timestamp: new Date(),
+        symptom_analysis: data.symptom_analysis
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -86,7 +97,12 @@ export default function ChatInterface() {
     <div className="chat-container">
       <div className="chat-messages">
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <div key={message.id}>
+            <MessageBubble message={message} />
+            {message.symptom_analysis && (
+              <SymptomAnalysis analysis={message.symptom_analysis} />
+            )}
+          </div>
         ))}
         {isLoading && (
           <div className="flex items-center space-x-2 p-4">

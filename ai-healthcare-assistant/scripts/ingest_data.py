@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Data ingestion script for AI Healthcare Assistant.
-Loads YAML data and creates vector embeddings.
+Loads YAML data and creates vector embeddings with medical-specific processing.
 """
 
 import sys
@@ -17,7 +17,7 @@ from services.vector_db import VectorDatabase
 from rag.data_ingestion import DataIngestionPipeline
 
 def main():
-    print("Starting data ingestion...")
+    print("Starting medical data ingestion...")
 
     # Initialize vector database
     vector_db = VectorDatabase(
@@ -39,16 +39,20 @@ def main():
     print("Clearing existing data...")
     vector_db.clear_collection()
 
-    # Ingest new data
+    # Ingest new data with medical processing
     pipeline.ingest_data(str(data_dir))
 
-    # Print stats
+    # Print enhanced stats
     stats = pipeline.get_stats()
     print("\nIngestion complete!")
     print(f"Total documents: {stats['total_documents']}")
-    print("Topics:")
+    print(f"Average content length: {stats['avg_content_length']:.0f} characters")
+    print("\nTopics:")
     for topic, count in stats['topics'].items():
         print(f"  {topic}: {count}")
+    print("\nChunk types:")
+    for chunk_type, count in stats['chunk_types'].items():
+        print(f"  {chunk_type}: {count}")
 
 if __name__ == "__main__":
     main()
