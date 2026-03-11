@@ -1,8 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
-from typing import List, Dict, Any, Optional
-import numpy as np
+from typing import List, Dict, Any
 import uuid
 from pathlib import Path
 
@@ -24,7 +23,7 @@ class VectorDatabase:
         # Get or create collection
         try:
             self.collection = self.client.get_collection(name=collection_name)
-        except:
+        except Exception:
             self.collection = self.client.create_collection(name=collection_name)
 
     def add_documents(self, documents: List[Dict[str, Any]]) -> None:

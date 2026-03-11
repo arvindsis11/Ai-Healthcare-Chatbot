@@ -1,5 +1,4 @@
 import yaml
-import os
 from typing import List, Dict, Any
 from pathlib import Path
 
@@ -54,7 +53,6 @@ def preprocess_medical_text(text: str) -> str:
 
 def chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
     """Split text into overlapping chunks, preserving medical context."""
-    words = text.split()
     chunks = []
 
     # For medical content, try to preserve sentence boundaries
