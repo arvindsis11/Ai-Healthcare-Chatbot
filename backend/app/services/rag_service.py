@@ -1,7 +1,6 @@
 from ..repositories.vector_db import VectorDatabase
 from .llm_service import LLMService
 from typing import List, Dict, Any, Optional
-from ..models.chat import SymptomAnalysis
 import re
 
 
@@ -21,7 +20,7 @@ class RAGService:
         """Extract potential symptoms from user text using simple NLP."""
         # Common symptom keywords and patterns
         symptom_keywords = [
-            'pain', 'fever', 'headache', 'cough', 'nausea', 'vomiting', 'dizziness',
+            'pain', 'fever', 'headache', 'cough', 'nausea', 'nauseous', 'vomiting', 'dizziness',  # both forms: 'nausea' ≠ substring of 'nauseous'
             'fatigue', 'weakness', 'rash', 'sore throat', 'runny nose', 'congestion',
             'chest pain', 'shortness of breath', 'abdominal pain', 'diarrhea',
             'constipation', 'joint pain', 'muscle pain', 'back pain', 'neck pain',
