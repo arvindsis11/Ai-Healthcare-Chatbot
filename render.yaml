@@ -1,14 +1,7 @@
 # Render.com Blueprint — AI Healthcare Chatbot
-# Deploy at: https://dashboard.render.com/blueprints
-# Docs: https://render.com/docs/blueprint-spec
-#
-# NOTE: Service URLs follow the pattern https://<service-name>.onrender.com
-# The names below ("ai-healthcare-backend", "ai-healthcare-frontend") are used
-# in ALLOWED_ORIGINS and BACKEND_URL.  If you rename a service, update those
-# values to match.
 
 services:
-  # ── Backend ─────────────────────────────────────────────────────────────────
+  # ── Backend ───────────────────────────────────────────────
   - type: web
     name: ai-healthcare-backend
     runtime: docker
@@ -18,7 +11,7 @@ services:
     healthCheckPath: /
     envVars:
       - key: OPENAI_API_KEY
-        sync: false          # set manually in Render dashboard after first deploy
+        sync: false
       - key: OPENAI_MODEL
         value: gpt-3.5-turbo
       - key: DATABASE_URL
@@ -31,12 +24,11 @@ services:
           name: healthcare-redis
           property: connectionString
       - key: ALLOWED_ORIGINS
-        # Matches https://<frontend-service-name>.onrender.com — update if renamed
         value: '["https://ai-healthcare-frontend.onrender.com","http://localhost:3000"]'
       - key: DEBUG
         value: "false"
 
-  # ── Frontend ─────────────────────────────────────────────────────────────────
+  # ── Frontend ──────────────────────────────────────────────
   - type: web
     name: ai-healthcare-frontend
     runtime: docker
@@ -44,21 +36,19 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      # Matches https://<backend-service-name>.onrender.com — update if renamed
       - key: BACKEND_URL
         value: https://ai-healthcare-backend.onrender.com
       - key: NODE_ENV
         value: production
 
-  # ── Redis ────────────────────────────────────────────────────────────────────
+  # ── Redis ─────────────────────────────────────────────────
   - type: redis
     name: healthcare-redis
     plan: free
-    ipAllowList: []  # only allow internal connections
+    ipAllowList: []
 
-# ── PostgreSQL ──────────────────────────────────────────────────────────────
+# ── PostgreSQL ──────────────────────────────────────────────
 databases:
   - name: healthcare-db
     databaseName: healthcare
-    user: postgres
     plan: free
