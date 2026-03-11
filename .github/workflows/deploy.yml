@@ -1,11 +1,68 @@
 name: Deploy
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
 
 jobs:
-  deploy-compose:
+  # ── Deploy backend to Render ────────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend (Render)
     runs-on: ubuntu-latest
+    if: vars.RENDER_BACKEND_DEPLOY_HOOK != ''
+    permissions: {}
+    steps:
+      - name: Trigger Render backend deploy
+        run: |
+          curl -fsSL -X POST "${{ vars.RENDER_BACKEND_DEPLOY_HOOK }}"
+
+  # ── Deploy frontend to Vercel ───────────────────────────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    runs-on: ubuntu-latest
+    if: vars.VERCEL_ORG_ID != ''
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: |
+          vercel pull --yes --environment=production \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project
+        run: |
+          vercel build --prod \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        run: |
+          vercel deploy --prebuilt --prod \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+  # ── Fallback: docker compose (self-hosted runner) ──────────────────────────
+  deploy-compose:
+    name: Deploy via Docker Compose (self-hosted)
+    runs-on: [self-hosted]
+    if: "!vars.RENDER_BACKEND_DEPLOY_HOOK && !vars.VERCEL_ORG_ID"
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -1,0 +1,64 @@
+# Render.com Blueprint — AI Healthcare Chatbot
+# Deploy at: https://dashboard.render.com/blueprints
+# Docs: https://render.com/docs/blueprint-spec
+#
+# NOTE: Service URLs follow the pattern https://<service-name>.onrender.com
+# The names below ("ai-healthcare-backend", "ai-healthcare-frontend") are used
+# in ALLOWED_ORIGINS and BACKEND_URL.  If you rename a service, update those
+# values to match.
+
+services:
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  - type: web
+    name: ai-healthcare-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false          # set manually in Render dashboard after first deploy
+      - key: OPENAI_MODEL
+        value: gpt-3.5-turbo
+      - key: DATABASE_URL
+        fromDatabase:
+          name: healthcare-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: healthcare-redis
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        # Matches https://<frontend-service-name>.onrender.com — update if renamed
+        value: '["https://ai-healthcare-frontend.onrender.com","http://localhost:3000"]'
+      - key: DEBUG
+        value: "false"
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+  - type: web
+    name: ai-healthcare-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      # Matches https://<backend-service-name>.onrender.com — update if renamed
+      - key: BACKEND_URL
+        value: https://ai-healthcare-backend.onrender.com
+      - key: NODE_ENV
+        value: production
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  - type: redis
+    name: healthcare-redis
+    plan: free
+    ipAllowList: []  # only allow internal connections
+
+# ── PostgreSQL ──────────────────────────────────────────────────────────────
+databases:
+  - name: healthcare-db
+    databaseName: healthcare
+    user: postgres
+    plan: free
