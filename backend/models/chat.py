@@ -1,50 +1,45 @@
-"""
-Pydantic models for the AI Healthcare Assistant API
-"""
-
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import List, Optional, Dict
 from datetime import datetime
+from enum import Enum
+
+class RiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 class SymptomAnalysis(BaseModel):
-    """Symptom analysis model"""
-    severity_score: int
-    risk_level: str  # 'low', 'medium', 'high'
-    possible_conditions: list[str]
+    symptoms: List[str]
+    severity_score: int  # 1-10 scale
+    risk_level: RiskLevel
+    possible_conditions: List[str]
     urgency_recommendation: str
 
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+    timestamp: Optional[datetime] = None
+    symptom_analysis: Optional[SymptomAnalysis] = None
+
 class ChatRequest(BaseModel):
-    """Text-based chat request"""
     message: str
     conversation_id: Optional[str] = None
-
-class VoiceChatRequest(BaseModel):
-    """Voice-based chat request"""
-    generate_audio: bool = True
+    user_id: Optional[str] = None
+    symptoms: Optional[List[str]] = None  # Explicit symptom list
 
 class ChatResponse(BaseModel):
-    """Chat response model"""
-    message: str
+    response: str
+    conversation_id: str
+    sources: Optional[List[str]] = None
     symptom_analysis: Optional[SymptomAnalysis] = None
-    audio_url: Optional[str] = None
-    transcribed_text: Optional[str] = None
-    timestamp: Optional[datetime] = None
+    disclaimer: str = "This is not medical advice. Please consult a healthcare professional for proper diagnosis and treatment."
 
-class VoiceConfig(BaseModel):
-    """Voice configuration"""
-    stt_model: str = "whisper-1"
-    tts_voice: str = "Rachel"  # ElevenLabs voice
-    tts_model: str = "eleven_monolingual_v1"
+class Document(BaseModel):
+    content: str
+    metadata: Optional[dict] = None
+    source: Optional[str] = None
 
-class AudioUploadResponse(BaseModel):
-    """Response for audio upload endpoints"""
-    success: bool
-    text: Optional[str] = None
-    audio_url: Optional[str] = None
-    error: Optional[str] = None
-
-class HealthCheckResponse(BaseModel):
-    """Health check response"""
+class HealthCheck(BaseModel):
     status: str
-    services: Dict[str, bool]
-    timestamp: datetime = datetime.now()
+    timestamp: datetime
+    version: str

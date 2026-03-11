@@ -1,47 +1,22 @@
-"""
-Async LLM Service for FastAPI backend
-Integrates with existing LLM service for voice interactions
-"""
-
-import os
-import logging
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.schema import StrOutputParser, BaseMessage
+from langchain.schema.runnable import RunnablePassthrough
 from typing import List, Dict, Any, Optional
-import asyncio
-
-try:
-    from langchain_openai import ChatOpenAI
-    from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
-    from langchain.schema import StrOutputParser
-    from langchain.schema.runnable import RunnablePassthrough
-    import json
-    import re
-except ImportError as e:
-    logging.error(f"Missing LangChain dependencies: {e}")
-    raise
-
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
-
-logger = logging.getLogger(__name__)
+import json
+import re
+from ..models.chat import SymptomAnalysis, RiskLevel
 
 class LLMService:
-    """Async LLM Service for healthcare chatbot"""
-
-    def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
-
+    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
         self.llm = ChatOpenAI(
-            openai_api_key=self.api_key,
-            model="gpt-3.5-turbo",
+            openai_api_key=api_key,
+            model=model,
             temperature=0.3,  # Lower temperature for medical advice
             max_tokens=1500
         )
 
-        # Medical system prompt
+        # System prompts for different functionalities
         self.medical_system_prompt = """
         You are a medical assistant AI. You provide helpful, accurate information about health and symptoms,
         but you ALWAYS emphasize that you are not a substitute for professional medical advice.
@@ -60,112 +35,141 @@ class LLMService:
         - Preventive measures
         """
 
-    def is_available(self) -> bool:
-        """Check if LLM service is available"""
-        return bool(self.api_key)
+        self.symptom_analysis_prompt = """
+        Analyze the following symptoms and provide a structured assessment.
+        Return your response as a JSON object with this exact structure:
 
-    async def generate_response(self, message: str) -> Dict[str, Any]:
+        {
+            "symptoms": ["list", "of", "identified", "symptoms"],
+            "severity_score": <number 1-10, where 1 is mild and 10 is life-threatening>,
+            "risk_level": "<low|medium|high>",
+            "possible_conditions": ["list", "of", "possible", "general", "conditions"],
+            "urgency_recommendation": "<recommendation for when to seek medical help>"
+        }
+
+        Guidelines for scoring:
+        - Severity 1-3: Mild symptoms, can usually wait for routine care
+        - Severity 4-6: Moderate symptoms, should see doctor within days
+        - Severity 7-10: Severe symptoms, seek immediate medical attention
+
+        Risk levels:
+        - LOW: Non-urgent, can be managed at home
+        - MEDIUM: Should see healthcare provider within days
+        - HIGH: Requires immediate medical attention
+
+        Be conservative with high severity scores. When in doubt, err on the side of caution.
         """
-        Generate a medical response to user message
 
-        Args:
-            message: User's message
+    def analyze_symptoms(self, symptoms: List[str], user_description: str = "") -> SymptomAnalysis:
+        """Analyze symptoms and return structured assessment."""
+        symptoms_text = ", ".join(symptoms)
+        full_description = f"Symptoms: {symptoms_text}\nDescription: {user_description}"
 
-        Returns:
-            Dict containing response message and optional symptom analysis
-        """
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(self.symptom_analysis_prompt),
+            HumanMessagePromptTemplate.from_template("Please analyze these symptoms: {symptoms}")
+        ])
+
+        chain = prompt | self.llm | StrOutputParser()
+
         try:
-            logger.info(f"Generating response for: {message[:50]}...")
-
-            # Create prompt template
-            template = f"""{self.medical_system_prompt}
-
-User Message: {{message}}
-
-Provide a helpful, empathetic response that:
-1. Acknowledges the user's concern
-2. Provides general health information
-3. Gives appropriate self-care advice
-4. Strongly recommends professional medical consultation
-5. Ends with a medical disclaimer
-
-Keep your response conversational and supportive.
-
-Response:"""
-
-            prompt = ChatPromptTemplate.from_template(template)
-            chain = prompt | self.llm | StrOutputParser()
-
-            # Generate response
-            response_text = await asyncio.get_event_loop().run_in_executor(
-                None, chain.invoke, {"message": message}
-            )
-
-            # Check if message contains symptoms for analysis
-            symptom_keywords = [
-                'pain', 'ache', 'hurt', 'sore', 'fever', 'cough', 'nausea',
-                'headache', 'dizzy', 'fatigue', 'tired', 'sick', 'ill',
-                'symptom', 'feeling', 'stomach', 'chest', 'throat'
-            ]
-
-            has_symptoms = any(keyword in message.lower() for keyword in symptom_keywords)
-
-            result = {
-                "message": response_text.strip(),
-                "symptom_analysis": None
-            }
-
-            if has_symptoms:
-                # Perform symptom analysis
-                analysis = await self._analyze_symptoms_async(message)
-                result["symptom_analysis"] = analysis
-
-            return result
-
-        except Exception as e:
-            logger.error(f"LLM response generation failed: {e}")
-            return {
-                "message": "I'm sorry, I'm having trouble processing your request right now. Please try again or consult a healthcare professional for medical advice.",
-                "symptom_analysis": None
-            }
-
-    async def _analyze_symptoms_async(self, message: str) -> Optional[Dict[str, Any]]:
-        """Analyze symptoms from user message"""
-        try:
-            analysis_prompt = """
-Analyze the symptoms mentioned in this message and provide a structured assessment.
-Return your response as a JSON object with this exact structure:
-
-{
-    "severity_score": <number 1-10>,
-    "risk_level": "<low|medium|high>",
-    "possible_conditions": ["condition1", "condition2"],
-    "urgency_recommendation": "<recommendation text>"
-}
-
-Guidelines:
-- Severity 1-3: Mild, routine care
-- Severity 4-6: Moderate, see doctor within days
-- Severity 7-10: Severe, immediate attention
-- Be conservative with high scores
-
-Message: {message}
-"""
-
-            prompt = ChatPromptTemplate.from_template(analysis_prompt)
-            chain = prompt | self.llm | StrOutputParser()
-
-            response = await asyncio.get_event_loop().run_in_executor(
-                None, chain.invoke, {"message": message}
-            )
-
-            # Extract JSON
+            response = chain.invoke({"symptoms": full_description})
+            # Extract JSON from response
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 analysis_data = json.loads(json_match.group())
-                return analysis_data
-
+                return SymptomAnalysis(**analysis_data)
+            else:
+                # Fallback analysis
+                return SymptomAnalysis(
+                    symptoms=symptoms,
+                    severity_score=5,
+                    risk_level=RiskLevel.MEDIUM,
+                    possible_conditions=["Unknown - please consult a doctor"],
+                    urgency_recommendation="Please consult a healthcare professional for proper evaluation."
+                )
         except Exception as e:
-            logger.error(f"Symptom analysis failed: {e}")
+            print(f"Error in symptom analysis: {e}")
+            return SymptomAnalysis(
+                symptoms=symptoms,
+                severity_score=5,
+                risk_level=RiskLevel.MEDIUM,
+                possible_conditions=["Unable to analyze - consult a doctor"],
+                urgency_recommendation="Please seek medical attention for proper evaluation."
+            )
 
-        return None
+    def generate_medical_response(self, query: str, context: Optional[List[str]] = None, symptom_analysis: Optional[SymptomAnalysis] = None) -> str:
+        """Generate a medical response using RAG with symptom analysis."""
+
+        # Build context
+        context_text = ""
+        if context:
+            context_text = "\n\n".join(context)
+
+        # Add symptom analysis if available
+        analysis_text = ""
+        if symptom_analysis:
+            analysis_text = f"""
+            Symptom Analysis:
+            - Identified Symptoms: {', '.join(symptom_analysis.symptoms)}
+            - Severity Score: {symptom_analysis.severity_score}/10
+            - Risk Level: {symptom_analysis.risk_level.value.upper()}
+            - Possible General Conditions: {', '.join(symptom_analysis.possible_conditions)}
+            - Urgency: {symptom_analysis.urgency_recommendation}
+            """
+
+        template = f"""{self.medical_system_prompt}
+
+        Context Information:
+        {{context}}
+
+        Symptom Analysis:
+        {{analysis}}
+
+        User Query: {{question}}
+
+        Provide a helpful response that:
+        1. Acknowledges the user's symptoms/concerns
+        2. Provides general information based on the context
+        3. Includes the symptom analysis insights
+        4. Gives appropriate precautions and self-care advice
+        5. Strongly recommends professional medical consultation
+        6. Ends with the medical disclaimer
+
+        Response:"""
+
+        prompt = ChatPromptTemplate.from_template(template)
+
+        chain = (
+            {
+                "context": lambda x: context_text,
+                "analysis": lambda x: analysis_text,
+                "question": RunnablePassthrough()
+            }
+            | prompt
+            | self.llm
+            | StrOutputParser()
+        )
+
+        return chain.invoke(query)
+
+    def generate_response(self, query: str, context: Optional[List[str]] = None) -> str:
+        """Legacy method for backward compatibility."""
+        return self.generate_medical_response(query, context)
+
+    def summarize_context(self, documents: List[str]) -> str:
+        """Summarize retrieved documents for context."""
+        if not documents:
+            return ""
+
+        template = """Summarize the following healthcare information concisely, focusing on key symptoms, causes, and general advice:
+
+{documents}
+
+Summary:"""
+
+        prompt = ChatPromptTemplate.from_template(template)
+        chain = prompt | self.llm | StrOutputParser()
+
+        docs_text = "\n\n".join(documents[:3])  # Limit to top 3
+        return chain.invoke({"documents": docs_text})

@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
-from typing import Optional
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # OpenAI
@@ -17,8 +18,9 @@ class Settings(BaseSettings):
     # CORS
     allowed_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_file=str(Path(__file__).resolve().parents[1] / ".env"),
+        case_sensitive=False,
+    )
 
 settings = Settings()

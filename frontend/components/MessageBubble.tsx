@@ -1,53 +1,41 @@
-'use client'
+import { Bot, User } from 'lucide-react'
 
-import { Message } from '@/lib/types'
-import { cn } from '@/lib/utils'
+interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+}
 
 interface MessageBubbleProps {
   message: Message
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user'
 
   return (
-    <div className={cn(
-      "flex w-full",
-      isUser ? "justify-end" : "justify-start"
-    )}>
-      <div className={cn(
-        "max-w-[80%] rounded-lg px-4 py-3",
+    <div className={`flex items-start space-x-3 p-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+      {!isUser && (
+        <div className="flex-shrink-0">
+          <Bot className="w-8 h-8 text-blue-500" />
+        </div>
+      )}
+      <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
         isUser
-          ? "bg-primary text-primary-foreground ml-12"
-          : "bg-muted mr-12"
-      )}>
-        {/* Message Content */}
-        <div className="text-sm leading-relaxed whitespace-pre-wrap">
-          {message.content}
-        </div>
-
-        {/* Timestamp */}
-        <div className={cn(
-          "text-xs mt-2 opacity-70",
-          isUser ? "text-primary-foreground/70" : "text-muted-foreground"
-        )}>
-          {message.timestamp.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </div>
-
-        {/* Typing Animation for Assistant */}
-        {message.isTyping && (
-          <div className="flex items-center space-x-1 mt-2">
-            <div className="flex space-x-1">
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce"></div>
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-            </div>
-          </div>
-        )}
+          ? 'bg-blue-500 text-white'
+          : 'bg-white border border-gray-200 text-gray-800'
+      }`}>
+        <p className="text-sm">{message.content}</p>
+        <p className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-gray-500'}`}>
+          {message.timestamp.toLocaleTimeString()}
+        </p>
       </div>
+      {isUser && (
+        <div className="flex-shrink-0">
+          <User className="w-8 h-8 text-gray-400" />
+        </div>
+      )}
     </div>
   )
 }
