@@ -1,70 +1,70 @@
 # Setup Guide
 
-This guide covers the current supported runtime: FastAPI backend + Next.js frontend.
-
 ## Prerequisites
 
-- Python 3.8+
-- Node.js 18+
-- npm 9+
+- Python 3.10+
+- Node.js 20+
+- npm 10+
+- Docker + Docker Compose (for full stack runtime)
 
-## Install
+## Local Development
+
+1. Install dependencies:
 
 ```bash
 ./setup.sh
 ```
 
-## Run Backend
+2. Start backend:
 
 ```bash
 ./run_backend.sh
 ```
 
-Backend endpoints:
-- `http://localhost:8000`
-- `http://localhost:8000/docs`
-
-## Run Frontend
+3. Start frontend:
 
 ```bash
 ./run_frontend.sh
 ```
 
-Frontend URL:
-- `http://localhost:3000`
+## Environment Variables
 
-## Run Full Stack
+Create `backend/.env`:
 
-```bash
-./start.sh
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-3.5-turbo
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/healthcare
+REDIS_URL=redis://localhost:6379/0
+RATE_LIMIT_PER_MINUTE=60
+REQUEST_SIZE_LIMIT_BYTES=65536
 ```
 
-## Ingest Data
+If `OPENAI_API_KEY` is unset, backend returns fallback guidance responses.
+
+## Containerized Full Stack
+
+```bash
+docker compose up --build
+```
+
+Services started:
+
+- backend (`:8000`)
+- frontend (`:3000`)
+- redis (`:6379`)
+- postgres (`:5432`)
+- nginx (`:80`)
+
+## Data Ingestion
 
 ```bash
 python scripts/ingest_data.py
 ```
 
-## Environment Variables
+## CI Validation Locally
 
-Create `backend/.env` as needed:
-
-```env
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-3.5-turbo
+```bash
+pytest tests/
+cd frontend && npm run lint && npm run build
 ```
-
-If `OPENAI_API_KEY` is empty, backend runs in fallback response mode.
-
-## Troubleshooting
-
-### Backend does not start
-- Ensure `.venv` exists and dependencies installed by `setup.sh`.
-- Verify port `8000` is free.
-
-### Frontend cannot reach backend
-- Confirm backend is running on port `8000`.
-- Verify rewrite config in `frontend/next.config.js`.
-
-### Slow first query
-- First query may load embedding models and can take longer.

@@ -5,6 +5,8 @@ The active backend application now lives at `backend.app.main`.
 
 from .app.main import app
 
+__all__ = ["app"]
+
 
 if __name__ == "__main__":
     import uvicorn

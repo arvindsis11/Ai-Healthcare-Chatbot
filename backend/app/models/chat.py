@@ -31,7 +31,10 @@ class ChatResponse(BaseModel):
     response: str
     conversation_id: str
     sources: Optional[List[str]] = None
+    citations: Optional[List[Dict[str, str]]] = None
     symptom_analysis: Optional[SymptomAnalysis] = None
+    detected_language: Optional[str] = None
+    recommended_specialist: Optional[str] = None
     disclaimer: str = "This is not medical advice. Please consult a healthcare professional for proper diagnosis and treatment."
 
 class Document(BaseModel):

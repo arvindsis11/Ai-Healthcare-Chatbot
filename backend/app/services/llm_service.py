@@ -1,8 +1,8 @@
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langchain.schema import StrOutputParser, BaseMessage
+from langchain.schema import StrOutputParser
 from langchain.schema.runnable import RunnablePassthrough
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 import json
 import re
 from ..models.chat import SymptomAnalysis, RiskLevel
@@ -118,7 +118,7 @@ class LLMService:
         if not self.llm:
             context_hint = ""
             if context:
-                context_hint = f"\n\nRelevant context snippets:\n- " + "\n- ".join(context[:2])
+                context_hint = "\n\nRelevant context snippets:\n- " + "\n- ".join(context[:2])
 
             risk_hint = ""
             if symptom_analysis:

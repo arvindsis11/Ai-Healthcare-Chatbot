@@ -1,29 +1,17 @@
 # Project Roadmap
 
-## Current Baseline
+This roadmap is now tracked in enterprise phases.
 
-- FastAPI backend under `backend/app`
-- Next.js frontend under `frontend/src`
-- RAG pipeline using ChromaDB + SentenceTransformers
-- Symptom analysis and risk-level UI rendering
+## Phase 1 - AI Healthcare Assistant
+- Safe chat, RAG citations, triage insights.
 
-## High Priority
+## Phase 2 - AI Healthcare API Platform
+- Multi-tenant APIs, robust auth, API governance.
 
-- Add authentication and authorization
-- Add request rate limiting and structured logging
-- Add API integration tests for `/api/v1/*`
-- Add frontend component and E2E tests
-- Add docs for deployment and observability
+## Phase 3 - AI Telemedicine Platform
+- Doctor integrations, appointment pathways, patient timelines.
 
-## Medium Priority
+## Phase 4 - AI Clinical Decision Support
+- Knowledge graph retrieval, clinician-assist evidence paths, auditability.
 
-- Extract dependency injection interfaces for repositories/services
-- Add Redis caching for repeated prompts/retrieval
-- Improve symptom extraction with model-assisted entities
-- Add conversation history persistence
-
-## Low Priority
-
-- Multilingual support
-- Analytics dashboard
-- Voice pipeline reintroduction behind explicit feature flag
+See [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md) for the detailed execution plan.

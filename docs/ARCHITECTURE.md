@@ -1,100 +1,68 @@
-# System Architecture
+# Enterprise Architecture
 
-This document describes the current runtime architecture of the repository.
-
-## High-Level Architecture
+## Layered Runtime Design
 
 ```text
-Next.js Frontend (frontend/src)
-  -> /api/v1/* requests
-Next.js rewrite proxy (frontend/next.config.js)
-  -> FastAPI Backend (backend/app)
-FastAPI Services
-  -> RAG service
-  -> LLM service
-  -> Vector repository (ChromaDB)
+Frontend (Next.js)
+  -> API Layer (FastAPI routes)
+  -> Service Layer (chat orchestration, triage, multilingual)
+  -> RAG Layer (semantic retrieval + reranking + citation assembly)
+  -> Repository Layer (ChromaDB, session persistence abstraction)
+  -> Infrastructure Layer (Redis, PostgreSQL, NGINX)
 ```
 
-## Backend Layout
+## Backend Structure
 
 ```text
 backend/app/
-  api/
-    chat.py
-  services/
-    rag_service.py
-    llm_service.py
-  repositories/
-    vector_db.py
-  models/
-    chat.py
-  rag/
-    data_ingestion.py
-    text_processing.py
-  core/
-    settings.py
-  main.py
+  api/            # route handlers only
+  services/       # business logic and orchestration
+  repositories/   # vector db + session persistence abstraction
+  rag/            # ingestion and text processing
+  ai/             # prompt guard + translation services
+  middleware/     # request id, latency, rate limiting, size limits
+  models/         # request/response schemas
+  core/           # settings, dependency wiring, logging
+  main.py         # app bootstrap
 ```
 
-### Request Flow
-
-```text
-POST /api/v1/chat
- -> api/chat.py
- -> services/rag_service.py
- -> repositories/vector_db.py (similarity retrieval)
- -> services/llm_service.py (response + triage)
- -> response model
-```
-
-## Frontend Layout
+## Frontend Structure
 
 ```text
 frontend/src/
   app/
-    layout.tsx
-    page.tsx
+  features/
+    chat/
+    analytics/
+    admin/
   components/
-    ChatWindow.tsx
-    Sidebar.tsx
-    MessageBubble.tsx
-    InputBar.tsx
-  services/
-    chatService.ts
   hooks/
+  services/
   store/
-  styles/
-    globals.css
+  types/
 ```
 
-### UI Flow
+## Request Lifecycle (`POST /api/v1/chat`)
 
-```text
-ChatWindow
- -> sends message via services/chatService.ts
- -> backend /api/v1/chat
- -> renders messages, risk badges, and sources
-```
+1. API validates request payload.
+2. Prompt guard blocks unsafe jailbreak-like input patterns.
+3. Language detection and normalization executed.
+4. Symptom extraction and rule-based triage generated.
+5. Cache lookup (`chat:{sha256(query)}`) attempted.
+6. On miss, hybrid RAG retrieval and reranking execute.
+7. LLM response generated with context + symptom analysis.
+8. Session repository stores user and assistant messages.
+9. Response includes citations, triage output, specialist recommendation, disclaimer.
 
-## Data and Ingestion Flow
+## Observability
 
-```text
-data/*.yml
- -> rag/text_processing.py
- -> rag/data_ingestion.py
- -> repositories/vector_db.py
- -> embeddings/chroma.sqlite3
-```
+- Structured JSON logging.
+- Request ID propagation in headers.
+- Latency headers (`X-Latency-MS`) and request-level logs.
 
-## Security and Safety Baseline
+## Safety and Compliance Baseline
 
-- Input validation with Pydantic models
-- CORS restrictions configured in `core/settings.py`
-- Medical disclaimer embedded in API responses and frontend banner
-- No diagnosis claims in prompts
-
-## Current Non-Goals
-
-- No legacy Flask/ChatterBot runtime paths
-- No active voice endpoint in backend
-- No separate Docker topology in this repository snapshot
+- Medical non-diagnostic guardrails in prompts and API disclaimer.
+- Input validation with Pydantic.
+- Configurable CORS allow-list.
+- Basic abuse controls (rate limiting and body size limit).
