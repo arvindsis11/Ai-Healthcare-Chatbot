@@ -3,7 +3,10 @@ from ..models.chat import ChatRequest, ChatResponse
 from ..services.rag_service import RAGService
 from ..core.settings import settings
 from datetime import datetime
+import logging
 import uuid
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -55,7 +58,8 @@ async def chat(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
+        logger.error("Error processing chat request: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error processing chat request")
 
 @router.post("/analyze-symptoms", response_model=ChatResponse)
 async def analyze_symptoms(
@@ -91,7 +95,8 @@ async def analyze_symptoms(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error analyzing symptoms: {str(e)}")
+        logger.error("Error analyzing symptoms: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Error analyzing symptoms")
 
 @router.get("/health")
 async def health_check():

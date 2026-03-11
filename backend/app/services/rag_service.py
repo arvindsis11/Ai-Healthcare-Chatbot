@@ -38,11 +38,9 @@ class RAGService:
         ]
 
         for pattern in symptom_patterns:
-            if re.search(pattern, text_lower):
-                # Extract the main symptom from the pattern
-                match = re.search(pattern, text_lower)
-                if match:
-                    found_symptoms.append(match.group().strip())
+            match = re.search(pattern, text_lower)
+            if match:
+                found_symptoms.append(match.group().strip())
 
         # Remove duplicates and return
         return list(set(found_symptoms))
