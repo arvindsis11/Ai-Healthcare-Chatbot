@@ -1,0 +1,32 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [master, enterprise-platform-upgrade]
+  pull_request:
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: ghcr.io/${{ github.repository_owner }}/ai-healthcare-backend:${{ github.sha }}
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: false
+          tags: ghcr.io/${{ github.repository_owner }}/ai-healthcare-frontend:${{ github.sha }}
