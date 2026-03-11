@@ -14,4 +14,4 @@ fi
 echo "Backend on http://localhost:8000"
 echo "Docs on http://localhost:8000/docs"
 
-exec .venv/bin/uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+exec .venv/bin/uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000

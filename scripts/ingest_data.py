@@ -5,16 +5,15 @@ Loads YAML data and creates vector embeddings with medical-specific processing.
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add backend to path
-backend_path = Path(__file__).parent / "backend"
-sys.path.insert(0, str(backend_path))
+repo_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo_root))
 
-from config.settings import settings
-from services.vector_db import VectorDatabase
-from rag.data_ingestion import DataIngestionPipeline
+from backend.app.core.settings import settings
+from backend.app.repositories.vector_db import VectorDatabase
+from backend.app.rag.data_ingestion import DataIngestionPipeline
 
 def main():
     print("Starting medical data ingestion...")

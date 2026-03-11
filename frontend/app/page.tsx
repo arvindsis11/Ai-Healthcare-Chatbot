@@ -1,5 +1,1 @@
-import ChatWindow from '../components/ChatWindow'
-
-export default function Home() {
-  return <ChatWindow />
-}
+export { default } from '../src/app/page'

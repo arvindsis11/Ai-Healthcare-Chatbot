@@ -1,25 +1,19 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
-            "name": "Python: Flask",
+            "name": "Python: FastAPI",
             "type": "python",
             "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "app.py",
-                "FLASK_DEBUG": "1"
-            },
+            "module": "uvicorn",
             "args": [
-                "run",
-                "--no-debugger",
-                "--no-reload"
+                "backend.app.main:app",
+                "--reload",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8000"
             ],
-            "jinja": true,
             "justMyCode": true
         }
     ]

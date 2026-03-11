@@ -3,6 +3,7 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Any, Optional
 import numpy as np
+import uuid
 from pathlib import Path
 
 class VectorDatabase:
@@ -40,7 +41,7 @@ class VectorDatabase:
             # Generate embedding
             embedding = self.embedding_model.encode(content).tolist()
 
-            ids.append(f"doc_{i}")
+            ids.append(str(uuid.uuid4()))
             embeddings.append(embedding)
             metadatas.append(metadata)
             contents.append(content)
