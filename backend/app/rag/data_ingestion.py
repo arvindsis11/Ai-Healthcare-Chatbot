@@ -1,5 +1,5 @@
-from ..utils.text_processing import load_yaml_files, chunk_text
-from ..services.vector_db import VectorDatabase
+from .text_processing import load_yaml_files, chunk_text
+from ..repositories.vector_db import VectorDatabase
 from typing import List, Dict, Any
 
 class DataIngestionPipeline:

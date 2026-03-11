@@ -1,8 +1,8 @@
 import pytest
-from backend.services.vector_db import VectorDatabase
-from backend.services.llm_service import LLMService
-from backend.services.rag_service import RAGService
-from backend.models.chat import SymptomAnalysis, RiskLevel
+from backend.app.repositories.vector_db import VectorDatabase
+from backend.app.services.llm_service import LLMService
+from backend.app.services.rag_service import RAGService
+from backend.app.models.chat import SymptomAnalysis, RiskLevel
 import tempfile
 import os
 
@@ -56,7 +56,7 @@ def test_symptom_analysis_structure():
 
 def test_rag_symptom_extraction():
     """Test symptom extraction from text."""
-    from backend.services.rag_service import RAGService
+    from backend.app.services.rag_service import RAGService
 
     # Mock RAG service for testing
     class MockVectorDB:

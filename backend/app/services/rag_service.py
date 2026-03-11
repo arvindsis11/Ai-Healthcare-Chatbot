@@ -1,4 +1,4 @@
-from .vector_db import VectorDatabase
+from ..repositories.vector_db import VectorDatabase
 from .llm_service import LLMService
 from typing import List, Dict, Any, Optional
 from ..models.chat import SymptomAnalysis

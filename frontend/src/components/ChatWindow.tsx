@@ -5,6 +5,7 @@ import { Bot, AlertTriangle } from 'lucide-react'
 import InputBar from './InputBar'
 import MessageBubble from './MessageBubble'
 import Sidebar from './Sidebar'
+import { sendChatMessage } from '../services/chatService'
 
 interface SymptomAnalysis {
   symptoms: string[]
@@ -96,19 +97,7 @@ export default function ChatWindow() {
   const runAssistantResponse = async (content: string) => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/v1/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: content }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to get response')
-      }
-
-      const data = await response.json()
+      const data = await sendChatMessage({ message: content })
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -184,7 +173,7 @@ export default function ChatWindow() {
   const latestAssistantId = [...messages].reverse().find((message) => message.role === 'assistant')?.id
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-gray-900 dark:text-gray-100">
+    <div className="relative flex h-screen overflow-hidden text-slate-900 dark:text-gray-100">
       <Sidebar
         conversations={conversations}
         activeConversationId={activeConversationId}
@@ -196,20 +185,28 @@ export default function ChatWindow() {
         isMobileSidebarOpen={isMobileSidebarOpen}
       />
 
-      <section className="relative flex min-w-0 flex-1 flex-col bg-[radial-gradient(circle_at_20%_0%,rgba(56,189,248,0.12),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(59,130,246,0.12),transparent_35%)] dark:bg-[radial-gradient(circle_at_20%_0%,rgba(56,189,248,0.08),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(59,130,246,0.08),transparent_35%)]">
-        <header className="border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80 md:px-8">
-          <h1 className="text-lg font-semibold">AI Healthcare Assistant</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">RAG-powered symptom support and guidance</p>
+      <section className="relative flex min-w-0 flex-1 flex-col">
+        <header className="panel-surface border-b border-slate-200/70 px-4 py-4 dark:border-slate-800/70 md:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">AI Healthcare Assistant</h1>
+              <p className="text-sm text-slate-600 dark:text-slate-300">Conversational triage with source-aware clinical guidance</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="rounded-full border border-emerald-400/50 bg-emerald-500/15 px-3 py-1 text-emerald-700 dark:text-emerald-300">Live</span>
+              <span className="rounded-full border border-blue-400/40 bg-blue-500/15 px-3 py-1 text-blue-700 dark:text-blue-300">RAG</span>
+            </div>
+          </div>
         </header>
 
-        <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-200 md:px-8">
+        <div className="border-b border-amber-300/70 bg-amber-50/90 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-200 md:px-8">
           <p className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
             This AI provides general health information and is not a substitute for professional medical advice.
           </p>
         </div>
 
-        <div ref={scrollAreaRef} className="flex-1 overflow-y-auto pb-24">
+        <div ref={scrollAreaRef} className="flex-1 overflow-y-auto px-2 pb-24 md:px-6">
           {messages.map((message) => {
             const shouldShowStreaming = message.id === streamingMessageId && streamingContent
             return (
@@ -230,12 +227,12 @@ export default function ChatWindow() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
                 <Bot className="h-4 w-4" />
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <div className="panel-surface rounded-xl border border-slate-200/80 px-4 py-3 shadow-glow dark:border-slate-700/80">
                 <p className="mb-1 text-sm">AI is thinking...</p>
                 <div className="flex gap-1">
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: '0.15s' }} />
-                  <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" style={{ animationDelay: '0.3s' }} />
+                  <span className="h-2 w-2 animate-pulseSoft rounded-full bg-blue-500" />
+                  <span className="h-2 w-2 animate-pulseSoft rounded-full bg-blue-500" style={{ animationDelay: '0.15s' }} />
+                  <span className="h-2 w-2 animate-pulseSoft rounded-full bg-blue-500" style={{ animationDelay: '0.3s' }} />
                 </div>
               </div>
             </div>

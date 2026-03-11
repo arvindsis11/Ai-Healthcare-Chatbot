@@ -61,8 +61,8 @@ export default function InputBar({ onSend, disabled = false }: InputBarProps) {
   }
 
   return (
-    <div className="sticky bottom-0 z-20 border-t border-slate-200 bg-white/95 p-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <div className="sticky bottom-0 z-20 border-t border-slate-200/70 bg-white/70 p-3 backdrop-blur-xl dark:border-slate-800/70 dark:bg-slate-950/65">
+      <div className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-glow dark:border-slate-700/80 dark:bg-slate-900/90">
         <textarea
           ref={textareaRef}
           value={value}
@@ -96,7 +96,7 @@ export default function InputBar({ onSend, disabled = false }: InputBarProps) {
           type="button"
           onClick={submit}
           disabled={disabled || !value.trim()}
-          className="rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 p-2 text-white shadow-md shadow-blue-500/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl bg-gradient-to-r from-blue-600 via-brand-500 to-cyan-500 p-2 text-white shadow-glow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Send message"
         >
           <Send className="h-5 w-5" />

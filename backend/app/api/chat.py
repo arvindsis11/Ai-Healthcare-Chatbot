@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from ..models.chat import ChatRequest, ChatResponse
 from ..services.rag_service import RAGService
-from ..config.settings import settings
+from ..core.settings import settings
 from datetime import datetime
 import uuid
 
@@ -13,7 +13,7 @@ _rag_service = None
 def get_rag_service() -> RAGService:
     global _rag_service
     if _rag_service is None:
-        from ..services.vector_db import VectorDatabase
+        from ..repositories.vector_db import VectorDatabase
         from ..services.llm_service import LLMService
         from ..services.rag_service import RAGService
 
