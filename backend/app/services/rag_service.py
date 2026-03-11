@@ -21,7 +21,7 @@ class RAGService:
         """Extract potential symptoms from user text using simple NLP."""
         # Common symptom keywords and patterns
         symptom_keywords = [
-            'pain', 'fever', 'headache', 'cough', 'nausea', 'vomiting', 'dizziness',
+            'pain', 'fever', 'headache', 'cough', 'nausea', 'nauseous', 'vomiting', 'dizziness',
             'fatigue', 'weakness', 'rash', 'sore throat', 'runny nose', 'congestion',
             'chest pain', 'shortness of breath', 'abdominal pain', 'diarrhea',
             'constipation', 'joint pain', 'muscle pain', 'back pain', 'neck pain',
