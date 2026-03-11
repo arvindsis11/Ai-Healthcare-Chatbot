@@ -9,12 +9,15 @@ from ..models.chat import SymptomAnalysis, RiskLevel
 
 class LLMService:
     def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
-        self.llm = ChatOpenAI(
-            openai_api_key=api_key,
-            model=model,
-            temperature=0.3,  # Lower temperature for medical advice
-            max_tokens=1500
-        )
+        self.api_key = api_key
+        self.llm = None
+        if api_key:
+            self.llm = ChatOpenAI(
+                openai_api_key=api_key,
+                model=model,
+                temperature=0.3,  # Lower temperature for medical advice
+                max_tokens=1500
+            )
 
         # System prompts for different functionalities
         self.medical_system_prompt = """
@@ -62,6 +65,17 @@ class LLMService:
 
     def analyze_symptoms(self, symptoms: List[str], user_description: str = "") -> SymptomAnalysis:
         """Analyze symptoms and return structured assessment."""
+        if not self.llm:
+            severity = 2 if len(symptoms) <= 1 else 5
+            risk = RiskLevel.LOW if severity <= 3 else RiskLevel.MEDIUM
+            return SymptomAnalysis(
+                symptoms=symptoms,
+                severity_score=severity,
+                risk_level=risk,
+                possible_conditions=["General symptom pattern - clinical evaluation needed"],
+                urgency_recommendation="Monitor symptoms and consult a healthcare professional if they worsen or persist."
+            )
+
         symptoms_text = ", ".join(symptoms)
         full_description = f"Symptoms: {symptoms_text}\nDescription: {user_description}"
 
@@ -100,6 +114,27 @@ class LLMService:
 
     def generate_medical_response(self, query: str, context: Optional[List[str]] = None, symptom_analysis: Optional[SymptomAnalysis] = None) -> str:
         """Generate a medical response using RAG with symptom analysis."""
+
+        if not self.llm:
+            context_hint = ""
+            if context:
+                context_hint = f"\n\nRelevant context snippets:\n- " + "\n- ".join(context[:2])
+
+            risk_hint = ""
+            if symptom_analysis:
+                risk_hint = (
+                    f"\n\nEstimated triage risk: {symptom_analysis.risk_level.value.upper()} "
+                    f"(severity {symptom_analysis.severity_score}/10)."
+                )
+
+            return (
+                "I can provide general health information, but an OpenAI API key is not configured in this environment, "
+                "so I am using a limited fallback response mode. "
+                "Please consult a licensed healthcare professional for diagnosis and treatment." +
+                risk_hint +
+                context_hint +
+                "\n\nMedical disclaimer: This is not medical advice."
+            )
 
         # Build context
         context_text = ""
