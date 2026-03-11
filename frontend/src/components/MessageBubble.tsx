@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
 import { Bot, Copy, User } from 'lucide-react'
 
 interface Message {
@@ -51,19 +54,30 @@ function getRiskStyles(level?: 'low' | 'medium' | 'high') {
 export default function MessageBubble({ message, isLatestAssistant = false, onRegenerate }: MessageBubbleProps) {
   const isUser = message.role === 'user'
   const riskLevel = message.symptom_analysis?.risk_level
+  const [timeLabel, setTimeLabel] = useState('')
+
+  const dateTime = useMemo(() => {
+    const value = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
+    return value.toISOString()
+  }, [message.timestamp])
+
+  useEffect(() => {
+    const value = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
+    setTimeLabel(value.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
+  }, [message.timestamp])
 
   return (
-    <div className={`flex items-start gap-3 px-3 py-4 md:px-6 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex items-start gap-3 px-3 py-4 md:px-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && (
         <div className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md shadow-blue-500/30">
           <Bot className="h-4 w-4" />
         </div>
       )}
 
-      <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm md:max-w-2xl ${
+      <div className={`max-w-[88%] rounded-2xl px-4 py-3 shadow-sm md:max-w-2xl ${
         isUser
-          ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white'
-          : 'border border-slate-200 bg-slate-100/80 text-slate-800 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100'
+          ? 'bg-gradient-to-br from-blue-600 via-brand-500 to-cyan-500 text-white shadow-glow'
+          : 'panel-surface border border-slate-200/70 text-slate-800 dark:border-slate-700/70 dark:text-slate-100'
       }`}>
         {!isUser && riskLevel && (
           <span className={`mb-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${getRiskStyles(riskLevel)}`}>
@@ -71,13 +85,10 @@ export default function MessageBubble({ message, isLatestAssistant = false, onRe
           </span>
         )}
 
-        <div
-          className="prose prose-sm max-w-none break-words dark:prose-invert"
-          dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }}
-        />
+        <div className="max-w-none break-words whitespace-pre-wrap text-[14px] leading-6" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
 
         {!!message.sources?.length && !isUser && (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-white/70 p-3 dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="mt-3 rounded-xl border border-slate-200/80 bg-white/80 p-3 dark:border-slate-700/80 dark:bg-slate-900/70">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
               Sources used
             </p>
@@ -92,13 +103,15 @@ export default function MessageBubble({ message, isLatestAssistant = false, onRe
         )}
 
         <div className={`mt-3 flex items-center justify-between gap-3 text-xs ${isUser ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
-          {message.timestamp.toLocaleTimeString()}
+          <time dateTime={dateTime} suppressHydrationWarning>
+            {timeLabel}
+          </time>
           {!isUser && (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => navigator.clipboard.writeText(message.content)}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition hover:bg-slate-200 dark:hover:bg-slate-700"
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition hover:bg-slate-200/80 dark:hover:bg-slate-700"
                 aria-label="Copy message"
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -108,7 +121,7 @@ export default function MessageBubble({ message, isLatestAssistant = false, onRe
                 <button
                   type="button"
                   onClick={onRegenerate}
-                  className="rounded-md px-2 py-1 transition hover:bg-slate-200 dark:hover:bg-slate-700"
+                  className="rounded-md px-2 py-1 transition hover:bg-slate-200/80 dark:hover:bg-slate-700"
                 >
                   Regenerate
                 </button>
