@@ -42,6 +42,10 @@
 git clone https://github.com/arvindsis11/Ai-Healthcare-Chatbot.git
 cd Ai-Healthcare-Chatbot
 
+# Configure environment
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY (required for LLM responses)
+
 # Start backend
 ./setup.sh
 ./run_backend.sh        # Terminal 1: http://localhost:8000
@@ -315,13 +319,19 @@ curl -X POST http://localhost:8000/api/v1/chat \
 
 ## 🤝 Contributing
 
-We welcome contributions! Please:
+We welcome contributions! Please read our [Contributing Guide](docs/CONTRIBUTING.md) and
+[Code of Conduct](CODE_OF_CONDUCT.md) before getting started.
+
+To contribute:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
+
+Looking for something to work on? Check the [open issues](https://github.com/arvindsis11/Ai-Healthcare-Chatbot/issues)
+or the full list of proposed improvements in [GITHUB_ISSUES.md](GITHUB_ISSUES.md).
 
 ---
 

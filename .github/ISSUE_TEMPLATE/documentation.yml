@@ -1,0 +1,46 @@
+name: Documentation Improvement
+description: Report missing, outdated, or incorrect documentation
+title: "Docs: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Good documentation helps contributors get up to speed quickly. Thank you for helping us improve it!
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: Documentation Type
+      options:
+        - README
+        - API Reference (docs/API.md)
+        - Architecture (docs/ARCHITECTURE.md)
+        - Setup / Deployment (docs/SETUP.md)
+        - Contributing Guide (docs/CONTRIBUTING.md)
+        - Inline Code Comments / Docstrings
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is missing or incorrect?
+      description: Describe what documentation is missing, outdated, or wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: Provide the corrected or new documentation content if possible.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
