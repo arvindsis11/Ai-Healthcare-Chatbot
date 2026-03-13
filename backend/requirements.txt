@@ -1,7 +1,7 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
 langchain==0.1.0
 langchain-openai==0.0.6
 chromadb==0.4.18

@@ -1,7 +1,6 @@
-# Render.com Blueprint — AI Healthcare Chatbot
+# Render.com Blueprint - AI Healthcare Chatbot
 
 services:
-  # ── Backend ───────────────────────────────────────────────
   - type: web
     name: ai-healthcare-backend
     runtime: docker
@@ -28,7 +27,6 @@ services:
       - key: DEBUG
         value: "false"
 
-  # ── Frontend ──────────────────────────────────────────────
   - type: web
     name: ai-healthcare-frontend
     runtime: docker
@@ -41,13 +39,11 @@ services:
       - key: NODE_ENV
         value: production
 
-  # ── Redis ─────────────────────────────────────────────────
   - type: redis
     name: healthcare-redis
     plan: free
     ipAllowList: []
 
-# ── PostgreSQL ──────────────────────────────────────────────
 databases:
   - name: healthcare-db
     databaseName: healthcare
