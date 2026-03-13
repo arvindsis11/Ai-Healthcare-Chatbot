@@ -11,6 +11,7 @@ import CitationList from './CitationList'
 import ChatHistorySidebar from './ChatHistorySidebar'
 import SymptomAnalysisPanel from './SymptomAnalysisPanel'
 import type { ChatMessage } from '../types/chat'
+import LoadingDots from "../../../components/LoadingDots";
 
 const initialMessage: ChatMessage = {
   id: 'welcome',
@@ -115,7 +116,12 @@ export default function ChatWorkspace() {
                 {message.role === 'assistant' && <CitationList citations={message.citations} />}
               </div>
             ))}
-            {isLoading && <p className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">Generating response...</p>}
+            {isLoading && (
+              <div className="flex items-center gap-2 px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                <p>Generating response</p>
+                <LoadingDots />
+              </div>
+            )}
           </motion.section>
 
           <section className="hidden md:block">
