@@ -82,5 +82,5 @@ Tests check low, moderate, and high-risk scenarios with readable output.
 
 
 
-For detailed project documentation, see \[DOCUMENTATION](docs/DOCUMENTATION.md)
+For detailed project documentation, see [DOCUMENTATION](docs/DOCUMENTATION.md)
 
