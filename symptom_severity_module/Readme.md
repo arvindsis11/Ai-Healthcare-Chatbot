@@ -16,27 +16,17 @@ This project is a **standalone prototype** for predicting the severity of sympto
 
 ## Folder Structure
 ```
-symptom_severity_module/
-symptom_severity_module
-│
-├── __init__.py
-├── README.md
-├── requirements.txt
-│
-├── src
-│   ├── __init__.py
-│   └── severity_predictor.py
-│
-├── app
-│   ├── __init__.py
-│   └── demo_app.py
-│
-├── tests
-│   ├── __init__.py
-│   └── test_severity.py
-│
-└── docs
-    └── DOCUMENTATION.md
+Symptom_Severity_Prototype
+├── src/
+│   └── severity_predictor.py      # Core logic
+├── app/
+│   └── demo_app.py                # Interactive demo
+├── tests/
+│   └── test_severity.py           # Unit tests
+├── docs/
+│   └── DOCUMENTATION.md           # Detailed documentation
+├── requirements.txt               # Dependencies
+└── README.md                      # Project overview
 ```
 
 ## Setup
