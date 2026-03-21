@@ -1,5 +1,6 @@
 export interface ChatApiRequest {
   message: string
+  conversation_id:string
 }
 
 export interface ChatApiResponse {
@@ -33,16 +34,25 @@ export interface SessionHistoryResponse {
 }
 
 export async function sendChatMessage(payload: ChatApiRequest): Promise<ChatApiResponse> {
+  const body: any = {
+    message: payload.message,
+  }
+
+  if (payload.conversation_id) {
+    body.conversation_id = payload.conversation_id
+  }
+
   const response = await fetch('/api/v1/chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
-    throw new Error(`Chat request failed with status ${response.status}`)
+    const errorText = await response.text()
+    throw new Error(`Chat request failed (${response.status}): ${errorText}`)
   }
 
   return response.json()
