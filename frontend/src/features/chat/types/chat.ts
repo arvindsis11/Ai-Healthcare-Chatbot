@@ -22,3 +22,7 @@ export interface ChatMessage {
   citations?: Citation[]
   recommended_specialist?: string
 }
+export interface Conversation  {
+  id: string
+  title: string
+}
