@@ -57,13 +57,25 @@ export default function MessageBubble({ message, isLatestAssistant = false, onRe
   const [timeLabel, setTimeLabel] = useState('')
 
   const dateTime = useMemo(() => {
-    const value = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
-    return value.toISOString()
+  const value =
+    message.timestamp instanceof Date
+      ? message.timestamp
+      : new Date(message.timestamp)
+
+  if (isNaN(value.getTime())) return new Date().toISOString()
+
+  return value.toISOString()
   }, [message.timestamp])
 
   useEffect(() => {
-    const value = message.timestamp instanceof Date ? message.timestamp : new Date(message.timestamp)
+    const value =
+  message.timestamp instanceof Date
+    ? message.timestamp
+    : new Date(message.timestamp)
+
+  if (!isNaN(value.getTime())) {
     setTimeLabel(value.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
+  }
   }, [message.timestamp])
 
   return (

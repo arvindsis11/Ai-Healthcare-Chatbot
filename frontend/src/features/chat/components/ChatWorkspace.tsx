@@ -1,16 +1,16 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import InputBar from '../../../components/InputBar'
 import MessageBubble from '../../../components/MessageBubble'
-import { sendChatMessage } from '../../../services/chatService'
+import { fetchSessionHistory, sendChatMessage } from '../../../services/chatService'
 import CitationList from './CitationList'
 import ChatHistorySidebar from './ChatHistorySidebar'
 import SymptomAnalysisPanel from './SymptomAnalysisPanel'
-import type { ChatMessage } from '../types/chat'
+import type { ChatMessage, Conversation } from '../types/chat'
 import LoadingDots from "../../../components/LoadingDots";
 
 const initialMessage: ChatMessage = {
@@ -24,17 +24,38 @@ const initialMessage: ChatMessage = {
 export default function ChatWorkspace() {
   const [messages, setMessages] = useState<ChatMessage[]>([initialMessage])
   const [isLoading, setIsLoading] = useState(false)
-  const [activeConversationId, setActiveConversationId] = useState('current')
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+useEffect(() => {
+  try {
+    const stored = localStorage.getItem("conversations")
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      setConversations(parsed)
 
-  const historyItems = useMemo(() => {
-    const userItems = messages
-      .filter((m) => m.role === 'user')
-      .slice(-8)
-      .reverse()
-      .map((m) => ({ id: m.id, label: m.content.slice(0, 40) || 'New conversation' }))
+      if (parsed.length > 0) {
+        setActiveConversationId(parsed[0].id)
+      }
+    }
+  } catch {
+    localStorage.removeItem("conversations")
+  } finally {
+    setIsHydrated(true) 
+  }
+  }, [])
 
-    return userItems.length ? userItems : [{ id: 'current', label: 'Current conversation' }]
-  }, [messages])
+  useEffect(() => {
+  if (!isHydrated) return 
+
+  localStorage.setItem("conversations", JSON.stringify(conversations))
+}, [conversations, isHydrated])
+
+  const historyItems = conversations.map(c => ({
+  id: c.id,
+  label: c.title
+  }))
 
   const latestAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
 
@@ -45,11 +66,15 @@ export default function ChatWorkspace() {
       content,
       timestamp: new Date(),
     }
-    setMessages((prev) => [...prev, userMessage])
 
+    setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
+
     try {
-      const response = await sendChatMessage({ message: content })
+const response = await sendChatMessage({
+  message: content,
+  conversation_id: activeConversationId || undefined,
+})
       const assistantMessage: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
@@ -60,7 +85,25 @@ export default function ChatWorkspace() {
         citations: response.citations || [],
         recommended_specialist: response.recommended_specialist,
       }
+
+      if (!activeConversationId) {
+        setActiveConversationId(response.conversation_id)
+
+        setConversations(prev => {
+          const exists = prev.some(c => c.id === response.conversation_id)
+          if (exists) return prev
+
+          const newConversation = {
+            id: response.conversation_id,
+            title: content.slice(0, 40)
+          }
+
+          return [newConversation, ...prev]
+        })
+      }
+
       setMessages((prev) => [...prev, assistantMessage])
+
     } catch (_error) {
       setMessages((prev) => [
         ...prev,
@@ -78,7 +121,37 @@ export default function ChatWorkspace() {
 
   const onNewChat = () => {
     setMessages([{ ...initialMessage, id: `welcome-${Date.now()}`, timestamp: new Date() }])
-    setActiveConversationId('current')
+    setActiveConversationId(null)
+  }
+
+  useEffect(() => {
+  if (!activeConversationId) return
+
+  handleSelectConversation(activeConversationId)
+  }, [activeConversationId])
+
+  const handleSelectConversation = async (id: string) => {
+     setActiveConversationId(id)
+    try {
+      setIsLoading(true)
+      const data = await fetchSessionHistory(id)
+
+      const loadedMessages: ChatMessage[] = data.messages.map((m: any) => ({
+        id: m.id || `${m.role}-${m.created_at}-${Math.random()}`,        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.created_at),       
+        symptom_analysis: m.symptom_analysis,
+        sources: m.sources || [],
+        citations: m.citations || [],
+        recommended_specialist: m.recommended_specialist,
+      }))
+
+      setMessages(loadedMessages)
+    } catch (error) {
+      console.error("Failed to load conversation", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -86,7 +159,7 @@ export default function ChatWorkspace() {
       <ChatHistorySidebar
         items={historyItems}
         activeId={activeConversationId}
-        onSelect={setActiveConversationId}
+        onSelect={handleSelectConversation}
         onNewChat={onNewChat}
       />
 
@@ -111,8 +184,8 @@ export default function ChatWorkspace() {
             className="overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/50 pb-24 dark:border-slate-800/70 dark:bg-slate-900/40"
           >
             {messages.map((message) => (
-              <div key={message.id}>
-                <MessageBubble message={message} isLatestAssistant={message.id === latestAssistant?.id} />
+                  <div key={message.id}>
+                  <MessageBubble message={message} isLatestAssistant={message.id === latestAssistant?.id} />
                 {message.role === 'assistant' && <CitationList citations={message.citations} />}
               </div>
             ))}
