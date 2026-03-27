@@ -128,9 +128,7 @@ class HealthReportService:
 
         report: ReportSection = self._llm.generate_report_data(history)
 
-        severity_score: Optional[int] = None
-        for m in messages:
-            pass
+        severity_score: Optional[int] = report.severity_score
 
         buf = io.BytesIO()
         doc = SimpleDocTemplate(
@@ -172,6 +170,25 @@ class HealthReportService:
             )
         )
         story.append(meta_table)
+
+        if severity_score is not None:
+            risk_rows = [["Overall Risk:", _risk_label(severity_score)]]
+            risk_table = Table(risk_rows, colWidths=[1.4 * inch, 4.5 * inch])
+            risk_table.setStyle(
+                TableStyle(
+                    [
+                        ("FONTNAME", (0, 0), (0, 0), "Helvetica-Bold"),
+                        ("FONTNAME", (1, 0), (1, 0), "Helvetica-Bold"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 9),
+                        ("TEXTCOLOR", (0, 0), (0, 0), _TEXT_MUTED),
+                        ("TEXTCOLOR", (1, 0), (1, 0), _risk_color(severity_score)),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                        ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ]
+                )
+            )
+            story.append(risk_table)
+
         story.append(Spacer(1, 10))
 
         story.append(Paragraph("Summary", styles["section_heading"]))

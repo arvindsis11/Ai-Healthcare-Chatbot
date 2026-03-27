@@ -232,8 +232,15 @@ Return ONLY a JSON object with this exact structure:
     "possible_conditions": ["list of possible general conditions — do not diagnose, only suggest possibilities"],
     "suggested_precautions": ["list of self-care measures and precautions"],
     "when_to_consult_doctor": "clear guidance on urgency and when to seek professional help",
-    "summary": "2-3 sentence summary of the patient health concern and key findings"
+    "summary": "2-3 sentence summary of the patient health concern and key findings",
+    "severity_score": <integer 1-10 representing overall severity, where 1 is mild and 10 is life-threatening>,
+    "risk_level": "<low|medium|high>"
 }
+
+Severity scoring guidelines:
+- 1-3: Mild, manageable at home
+- 4-6: Moderate, should see a doctor within days
+- 7-10: Severe, requires prompt or immediate medical attention
 
 Be conservative, accurate, and do not make definitive diagnoses.
 Conversation:

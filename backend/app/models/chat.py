@@ -57,3 +57,5 @@ class ReportSection(BaseModel):
     suggested_precautions: List[str]
     when_to_consult_doctor: str
     summary: str
+    severity_score: Optional[int] = None
+    risk_level: Optional[str] = None
