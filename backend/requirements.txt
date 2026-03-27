@@ -16,3 +16,4 @@ tqdm==4.66.1
 redis==5.2.1
 psycopg[binary]==3.2.3
 spacy==3.8.2
+reportlab==4.2.5

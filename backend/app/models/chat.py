@@ -46,3 +46,14 @@ class HealthCheck(BaseModel):
     status: str
     timestamp: datetime
     version: str
+
+class HealthReportRequest(BaseModel):
+    conversation_id: str
+    patient_name: Optional[str] = None
+
+class ReportSection(BaseModel):
+    symptoms_detected: List[str]
+    possible_conditions: List[str]
+    suggested_precautions: List[str]
+    when_to_consult_doctor: str
+    summary: str
