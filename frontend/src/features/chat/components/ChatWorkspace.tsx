@@ -5,6 +5,7 @@ import { AlertTriangle, FileDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import InputBar from '../../../components/InputBar'
+import LanguageSelector from '../../../components/LanguageSelector'
 import MessageBubble from '../../../components/MessageBubble'
 import { downloadHealthReport, fetchSessionHistory, sendChatMessage } from '../../../services/chatService'
 import CitationList from './CitationList'
@@ -28,6 +29,7 @@ export default function ChatWorkspace() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
   const [isDownloadingReport, setIsDownloadingReport] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState('auto')
   
 useEffect(() => {
   try {
@@ -75,6 +77,7 @@ useEffect(() => {
 const response = await sendChatMessage({
   message: content,
   conversation_id: activeConversationId || undefined,
+  preferred_language: selectedLanguage !== 'auto' ? selectedLanguage : undefined,
 })
       const assistantMessage: ChatMessage = {
         id: String(Date.now() + 1),
@@ -182,16 +185,23 @@ const response = await sendChatMessage({
             <h1 className="text-xl font-semibold tracking-tight">AI Healthcare Platform</h1>
             <p className="text-sm text-slate-600 dark:text-slate-300">Scalable clinical guidance with retrieval citations and triage signals</p>
           </div>
-          {activeConversationId && (
-            <button
-              onClick={onDownloadReport}
-              disabled={isDownloadingReport}
-              className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50"
-            >
-              <FileDown className="h-4 w-4" />
-              {isDownloadingReport ? 'Generating…' : 'Download Report'}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <LanguageSelector
+              value={selectedLanguage}
+              onChange={setSelectedLanguage}
+              disabled={isLoading}
+            />
+            {activeConversationId && (
+              <button
+                onClick={onDownloadReport}
+                disabled={isDownloadingReport}
+                className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50"
+              >
+                <FileDown className="h-4 w-4" />
+                {isDownloadingReport ? 'Generating…' : 'Download Report'}
+              </button>
+            )}
+          </div>
         </header>
 
         <div className="border-b border-amber-300/70 bg-amber-50/90 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-200 md:px-8">

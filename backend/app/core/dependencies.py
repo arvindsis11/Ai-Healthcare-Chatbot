@@ -35,7 +35,7 @@ def get_rag_service() -> RAGService:
 
 @lru_cache
 def get_translation_service() -> TranslationService:
-    return TranslationService()
+    return TranslationService(api_key=settings.openai_api_key)
 
 
 @lru_cache

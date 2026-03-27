@@ -1,6 +1,7 @@
 export interface ChatApiRequest {
   message: string
-  conversation_id:string
+  conversation_id: string
+  preferred_language?: string
 }
 
 export interface ChatApiResponse {
@@ -40,6 +41,10 @@ export async function sendChatMessage(payload: ChatApiRequest): Promise<ChatApiR
 
   if (payload.conversation_id) {
     body.conversation_id = payload.conversation_id
+  }
+
+  if (payload.preferred_language && payload.preferred_language !== 'auto') {
+    body.preferred_language = payload.preferred_language
   }
 
   const response = await fetch('/api/v1/chat', {

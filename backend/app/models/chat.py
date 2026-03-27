@@ -26,6 +26,7 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     user_id: Optional[str] = None
     symptoms: Optional[List[str]] = None  # Explicit symptom list
+    preferred_language: Optional[str] = None  # ISO 639-1 code, e.g. "es", "fr"
 
 class ChatResponse(BaseModel):
     response: str
