@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      args:
+        BACKEND_URL: http://backend:8000
     environment:
       BACKEND_URL: http://backend:8000
     depends_on:
