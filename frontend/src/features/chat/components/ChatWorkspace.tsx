@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, FileDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import InputBar from '../../../components/InputBar'
 import MessageBubble from '../../../components/MessageBubble'
-import { fetchSessionHistory, sendChatMessage } from '../../../services/chatService'
+import { downloadHealthReport, fetchSessionHistory, sendChatMessage } from '../../../services/chatService'
 import CitationList from './CitationList'
 import ChatHistorySidebar from './ChatHistorySidebar'
 import SymptomAnalysisPanel from './SymptomAnalysisPanel'
@@ -27,6 +27,7 @@ export default function ChatWorkspace() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false)
   
 useEffect(() => {
   try {
@@ -119,6 +120,18 @@ const response = await sendChatMessage({
     }
   }
 
+  const onDownloadReport = async () => {
+    if (!activeConversationId) return
+    setIsDownloadingReport(true)
+    try {
+      await downloadHealthReport(activeConversationId)
+    } catch (error) {
+      console.error('Failed to download report', error)
+    } finally {
+      setIsDownloadingReport(false)
+    }
+  }
+
   const onNewChat = () => {
     setMessages([{ ...initialMessage, id: `welcome-${Date.now()}`, timestamp: new Date() }])
     setActiveConversationId(null)
@@ -164,9 +177,21 @@ const response = await sendChatMessage({
       />
 
       <main className="relative flex min-w-0 flex-1 flex-col">
-        <header className="panel-surface border-b border-slate-200/70 px-4 py-4 dark:border-slate-800/70 md:px-8">
-          <h1 className="text-xl font-semibold tracking-tight">AI Healthcare Platform</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300">Scalable clinical guidance with retrieval citations and triage signals</p>
+        <header className="panel-surface flex items-center justify-between border-b border-slate-200/70 px-4 py-4 dark:border-slate-800/70 md:px-8">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">AI Healthcare Platform</h1>
+            <p className="text-sm text-slate-600 dark:text-slate-300">Scalable clinical guidance with retrieval citations and triage signals</p>
+          </div>
+          {activeConversationId && (
+            <button
+              onClick={onDownloadReport}
+              disabled={isDownloadingReport}
+              className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50"
+            >
+              <FileDown className="h-4 w-4" />
+              {isDownloadingReport ? 'Generating…' : 'Download Report'}
+            </button>
+          )}
         </header>
 
         <div className="border-b border-amber-300/70 bg-amber-50/90 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-200 md:px-8">
