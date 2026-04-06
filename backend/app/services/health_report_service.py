@@ -1,6 +1,6 @@
 import io
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT

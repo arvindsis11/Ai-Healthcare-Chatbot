@@ -1,6 +1,6 @@
 export interface ChatApiRequest {
   message: string
-  conversation_id: string
+  conversation_id?: string
   preferred_language?: string
 }
 

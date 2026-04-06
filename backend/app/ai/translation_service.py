@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict
 
 SUPPORTED_LANGUAGES: Dict[str, str] = {
     "en": "English",
