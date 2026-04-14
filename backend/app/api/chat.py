@@ -59,7 +59,8 @@ async def chat(
 
         symptoms = symptom_extractor.extract(normalized_message, request.symptoms)
         rule_based_analysis = triage_service.assess(symptoms)
-        recommended_specialist = doctor_service.recommend(symptoms)
+        doctor_recommendation = doctor_service.recommend_detailed(symptoms)
+        recommended_specialist = doctor_recommendation.specialist
 
         cache_key = chat_cache_key(normalized_message)
         cached = cache.get(cache_key)
@@ -74,6 +75,7 @@ async def chat(
                 symptom_analysis=rule_based_analysis,
                 detected_language=detected_language,
                 recommended_specialist=recommended_specialist,
+                doctor_recommendation=doctor_recommendation,
             )
 
         # Use enhanced RAG query with symptom analysis
@@ -115,6 +117,7 @@ async def chat(
             symptom_analysis=result.get("symptom_analysis") or rule_based_analysis,
             detected_language=detected_language,
             recommended_specialist=recommended_specialist,
+            doctor_recommendation=doctor_recommendation,
         )
 
     except HTTPException:
@@ -154,13 +157,15 @@ async def analyze_symptoms(
         )
         triage = triage_service.assess(symptoms)
 
+        doctor_recommendation = doctor_service.recommend_detailed(symptoms)
         return ChatResponse(
             response=result["response"],
             conversation_id=request.conversation_id or str(uuid.uuid4()),
             sources=result.get("sources", []),
             citations=result.get("citations", []),
             symptom_analysis=result.get("symptom_analysis") or triage,
-            recommended_specialist=doctor_service.recommend(symptoms),
+            recommended_specialist=doctor_recommendation.specialist,
+            doctor_recommendation=doctor_recommendation,
         )
 
     except HTTPException:

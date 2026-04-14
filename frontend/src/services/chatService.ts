@@ -21,6 +21,12 @@ export interface ChatApiResponse {
   }
   detected_language?: string
   recommended_specialist?: string
+  doctor_recommendation?: {
+    specialist: string
+    confidence: number
+    reasoning: string
+    alternative_specialists: string[]
+  }
   disclaimer?: string
 }
 

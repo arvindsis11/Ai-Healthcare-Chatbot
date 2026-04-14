@@ -84,6 +84,7 @@ const response = await sendChatMessage({
         sources: response.sources || [],
         citations: response.citations || [],
         recommended_specialist: response.recommended_specialist,
+        doctor_recommendation: response.doctor_recommendation,
       }
 
       if (!activeConversationId) {
@@ -201,6 +202,7 @@ const response = await sendChatMessage({
             <SymptomAnalysisPanel
               analysis={latestAssistant?.symptom_analysis}
               specialist={latestAssistant?.recommended_specialist}
+              doctorRecommendation={latestAssistant?.doctor_recommendation}
             />
           </section>
         </div>
