@@ -50,10 +50,11 @@ async def chat(
         conversation_id = request.conversation_id or str(uuid.uuid4())
         request_id = getattr(request_ctx.state, "request_id", "unknown")
 
-        detected_language = translation_service.detect_language(request.message)
+        input_language = translation_service.detect_language(request.message)
+        target_language = request.preferred_language or input_language
         normalized_message = (
-            translation_service.translate_to_english(request.message, detected_language)
-            if detected_language != "en"
+            translation_service.translate_to_english(request.message, input_language)
+            if input_language != "en"
             else request.message
         )
 
@@ -65,15 +66,18 @@ async def chat(
         cache_key = chat_cache_key(normalized_message)
         cached = cache.get(cache_key)
         if cached:
+            cached_response = cached["response"]
+            if target_language != "en":
+                cached_response = translation_service.translate_from_english(cached_response, target_language)
             session_repository.append_message(conversation_id, "user", request.message)
-            session_repository.append_message(conversation_id, "assistant", cached["response"])
+            session_repository.append_message(conversation_id, "assistant", cached_response)
             return ChatResponse(
-                response=cached["response"],
+                response=cached_response,
                 conversation_id=conversation_id,
                 sources=cached.get("sources", []),
                 citations=cached.get("citations", []),
                 symptom_analysis=rule_based_analysis,
-                detected_language=detected_language,
+                detected_language=target_language,
                 recommended_specialist=recommended_specialist,
                 doctor_recommendation=doctor_recommendation,
             )
@@ -84,18 +88,19 @@ async def chat(
             symptoms,
         )
 
-        response_text = result["response"]
-        if detected_language != "en":
-            response_text = translation_service.translate_from_english(response_text, detected_language)
-
+        english_response = result["response"]
         cache.set(
             cache_key,
             {
-                "response": response_text,
+                "response": english_response,
                 "sources": result.get("sources", []),
                 "citations": result.get("citations", []),
             },
         )
+
+        response_text = english_response
+        if target_language != "en":
+            response_text = translation_service.translate_from_english(english_response, target_language)
 
         session_repository.append_message(conversation_id, "user", request.message)
         session_repository.append_message(conversation_id, "assistant", response_text)
@@ -115,7 +120,7 @@ async def chat(
             sources=result.get("sources", []),
             citations=result.get("citations", []),
             symptom_analysis=result.get("symptom_analysis") or rule_based_analysis,
-            detected_language=detected_language,
+            detected_language=target_language,
             recommended_specialist=recommended_specialist,
             doctor_recommendation=doctor_recommendation,
         )
@@ -173,6 +178,19 @@ async def analyze_symptoms(
     except Exception as e:
         logger.error("Error analyzing symptoms: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Error analyzing symptoms")
+
+@router.get("/languages")
+async def list_languages(
+    translation_service: TranslationService = Depends(get_translation_service),
+):
+    """Return the list of supported languages."""
+    return {
+        "languages": [
+            {"code": code, "name": name}
+            for code, name in translation_service.supported_languages.items()
+        ]
+    }
+
 
 @router.get("/health")
 async def health_check():

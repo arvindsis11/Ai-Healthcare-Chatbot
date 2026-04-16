@@ -10,6 +10,7 @@ from ..services.medical_intelligence_service import (
     SymptomExtractionService,
     TriageService,
 )
+from ..services.health_report_service import HealthReportService
 from ..services.rag_service import RAGService
 from .settings import settings
 
@@ -34,7 +35,7 @@ def get_rag_service() -> RAGService:
 
 @lru_cache
 def get_translation_service() -> TranslationService:
-    return TranslationService()
+    return TranslationService(api_key=settings.openai_api_key)
 
 
 @lru_cache
@@ -55,6 +56,11 @@ def get_doctor_recommendation_service() -> DoctorRecommendationService:
 @lru_cache
 def get_session_repository() -> SessionRepository:
     return SessionRepository()
+
+
+@lru_cache
+def get_health_report_service() -> HealthReportService:
+    return HealthReportService(get_session_repository(), get_llm_service())
 
 
 @lru_cache

@@ -5,7 +5,7 @@ from langchain.schema.runnable import RunnablePassthrough
 from typing import List, Optional
 import json
 import re
-from ..models.chat import SymptomAnalysis, RiskLevel
+from ..models.chat import SymptomAnalysis, RiskLevel, ReportSection
 
 class LLMService:
     def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
@@ -187,6 +187,87 @@ class LLMService:
         )
 
         return chain.invoke(query)
+
+    def generate_report_data(self, chat_history: List[dict]) -> ReportSection:
+        """Generate a structured health report from conversation history."""
+        if not chat_history:
+            return ReportSection(
+                symptoms_detected=[],
+                possible_conditions=[],
+                suggested_precautions=["Maintain a healthy lifestyle", "Stay hydrated", "Get adequate rest"],
+                when_to_consult_doctor="Consult a healthcare professional if you experience any concerning symptoms.",
+                summary="No conversation history available to generate a health report.",
+            )
+
+        conversation_text = "\n".join(
+            f"{msg['role'].capitalize()}: {msg['content']}" for msg in chat_history
+        )
+
+        if not self.llm:
+            user_messages = [m["content"] for m in chat_history if m["role"] == "user"]
+            combined = " ".join(user_messages).lower()
+            keywords = [
+                "fever", "headache", "nausea", "dizziness", "cough", "pain",
+                "fatigue", "vomiting", "rash", "shortness of breath", "chest pain",
+                "sore throat", "runny nose", "abdominal pain", "back pain",
+            ]
+            found = [kw for kw in keywords if kw in combined]
+            return ReportSection(
+                symptoms_detected=found if found else ["No specific symptoms identified"],
+                possible_conditions=["Unable to determine without LLM — consult a healthcare professional"],
+                suggested_precautions=[
+                    "Rest and stay hydrated",
+                    "Monitor your symptoms",
+                    "Avoid self-medication without professional guidance",
+                ],
+                when_to_consult_doctor="Please consult a healthcare professional for a proper evaluation.",
+                summary="Health report generated from conversation. An OpenAI API key is required for a detailed analysis.",
+            )
+
+        report_prompt = """Analyze the following patient-chatbot conversation and extract health information.
+Return ONLY a JSON object with this exact structure:
+
+{
+    "symptoms_detected": ["list of symptoms mentioned by the patient"],
+    "possible_conditions": ["list of possible general conditions — do not diagnose, only suggest possibilities"],
+    "suggested_precautions": ["list of self-care measures and precautions"],
+    "when_to_consult_doctor": "clear guidance on urgency and when to seek professional help",
+    "summary": "2-3 sentence summary of the patient health concern and key findings",
+    "severity_score": <integer 1-10 representing overall severity, where 1 is mild and 10 is life-threatening>,
+    "risk_level": "<low|medium|high>"
+}
+
+Severity scoring guidelines:
+- 1-3: Mild, manageable at home
+- 4-6: Moderate, should see a doctor within days
+- 7-10: Severe, requires prompt or immediate medical attention
+
+Be conservative, accurate, and do not make definitive diagnoses.
+Conversation:
+"""
+
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate.from_template(report_prompt + "{conversation}"),
+            HumanMessagePromptTemplate.from_template("Generate the health report JSON."),
+        ])
+
+        chain = prompt | self.llm | StrOutputParser()
+        try:
+            response = chain.invoke({"conversation": conversation_text})
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                return ReportSection(**data)
+        except Exception as e:
+            print(f"Error generating report data: {e}")
+
+        return ReportSection(
+            symptoms_detected=["Unable to extract symptoms"],
+            possible_conditions=["Unable to determine — consult a healthcare professional"],
+            suggested_precautions=["Rest and stay hydrated", "Monitor symptoms", "Seek medical advice if symptoms worsen"],
+            when_to_consult_doctor="Please consult a healthcare professional for a proper evaluation.",
+            summary="Health report could not be fully generated. Please consult a healthcare professional.",
+        )
 
     def generate_response(self, query: str, context: Optional[List[str]] = None) -> str:
         """Legacy method for backward compatibility."""
