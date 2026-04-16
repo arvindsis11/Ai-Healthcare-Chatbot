@@ -12,6 +12,13 @@ export interface Citation {
   excerpt: string
 }
 
+export interface DoctorRecommendation {
+  specialist: string
+  confidence: number
+  reasoning: string
+  alternative_specialists: string[]
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -21,6 +28,7 @@ export interface ChatMessage {
   sources?: string[]
   citations?: Citation[]
   recommended_specialist?: string
+  doctor_recommendation?: DoctorRecommendation
 }
 export interface Conversation  {
   id: string

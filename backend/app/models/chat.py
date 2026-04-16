@@ -27,6 +27,12 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
     symptoms: Optional[List[str]] = None  # Explicit symptom list
 
+class DoctorRecommendation(BaseModel):
+    specialist: str
+    confidence: float  # 0.0 - 1.0
+    reasoning: str
+    alternative_specialists: List[str] = []
+
 class ChatResponse(BaseModel):
     response: str
     conversation_id: str
@@ -35,6 +41,7 @@ class ChatResponse(BaseModel):
     symptom_analysis: Optional[SymptomAnalysis] = None
     detected_language: Optional[str] = None
     recommended_specialist: Optional[str] = None
+    doctor_recommendation: Optional[DoctorRecommendation] = None
     disclaimer: str = "This is not medical advice. Please consult a healthcare professional for proper diagnosis and treatment."
 
 class Document(BaseModel):
