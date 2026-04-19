@@ -42,13 +42,13 @@ class LLMService:
         Analyze the following symptoms and provide a structured assessment.
         Return your response as a JSON object with this exact structure:
 
-        {
+        {{
             "symptoms": ["list", "of", "identified", "symptoms"],
             "severity_score": <number 1-10, where 1 is mild and 10 is life-threatening>,
             "risk_level": "<low|medium|high>",
             "possible_conditions": ["list", "of", "possible", "general", "conditions"],
             "urgency_recommendation": "<recommendation for when to seek medical help>"
-        }
+        }}
 
         Guidelines for scoring:
         - Severity 1-3: Mild symptoms, can usually wait for routine care
@@ -227,7 +227,7 @@ class LLMService:
         report_prompt = """Analyze the following patient-chatbot conversation and extract health information.
 Return ONLY a JSON object with this exact structure:
 
-{
+{{
     "symptoms_detected": ["list of symptoms mentioned by the patient"],
     "possible_conditions": ["list of possible general conditions — do not diagnose, only suggest possibilities"],
     "suggested_precautions": ["list of self-care measures and precautions"],
@@ -235,7 +235,7 @@ Return ONLY a JSON object with this exact structure:
     "summary": "2-3 sentence summary of the patient health concern and key findings",
     "severity_score": <integer 1-10 representing overall severity, where 1 is mild and 10 is life-threatening>,
     "risk_level": "<low|medium|high>"
-}
+}}
 
 Severity scoring guidelines:
 - 1-3: Mild, manageable at home
