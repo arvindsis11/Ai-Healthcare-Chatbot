@@ -1,10 +1,11 @@
-import { ActivitySquare, ShieldAlert, Stethoscope } from 'lucide-react'
+import { ActivitySquare, ShieldAlert, Stethoscope, Users } from 'lucide-react'
 import * as Accordion from '@radix-ui/react-accordion'
-import type { SymptomAnalysis } from '../types/chat'
+import type { DoctorRecommendation, SymptomAnalysis } from '../types/chat'
 
 interface SymptomAnalysisPanelProps {
   analysis?: SymptomAnalysis
   specialist?: string
+  doctorRecommendation?: DoctorRecommendation
 }
 
 function severityTone(level: SymptomAnalysis['risk_level']) {
@@ -13,7 +14,19 @@ function severityTone(level: SymptomAnalysis['risk_level']) {
   return 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-500/10 dark:border-green-700/50'
 }
 
-export default function SymptomAnalysisPanel({ analysis, specialist }: SymptomAnalysisPanelProps) {
+function confidenceLabel(confidence: number): string {
+  if (confidence >= 0.8) return 'High'
+  if (confidence >= 0.5) return 'Moderate'
+  return 'Low'
+}
+
+function confidenceColor(confidence: number): string {
+  if (confidence >= 0.8) return 'bg-green-500'
+  if (confidence >= 0.5) return 'bg-yellow-500'
+  return 'bg-slate-400'
+}
+
+export default function SymptomAnalysisPanel({ analysis, specialist, doctorRecommendation }: SymptomAnalysisPanelProps) {
   if (!analysis) {
     return null
   }
@@ -48,12 +61,40 @@ export default function SymptomAnalysisPanel({ analysis, specialist }: SymptomAn
           </Accordion.Item>
         </Accordion.Root>
       )}
-      {specialist && (
+
+      {doctorRecommendation ? (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-700/50 dark:bg-blue-500/10">
+          <p className="mb-2 inline-flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+            <Stethoscope className="h-4 w-4" />
+            Recommended: {doctorRecommendation.specialist}
+          </p>
+          <div className="mb-2 flex items-center gap-2">
+            <div className="h-1.5 flex-1 rounded-full bg-slate-200 dark:bg-slate-700">
+              <div
+                className={`h-1.5 rounded-full ${confidenceColor(doctorRecommendation.confidence)}`}
+                style={{ width: `${doctorRecommendation.confidence * 100}%` }}
+              />
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {confidenceLabel(doctorRecommendation.confidence)} confidence
+            </span>
+          </div>
+          <p className="mb-2 text-xs text-slate-600 dark:text-slate-300">
+            {doctorRecommendation.reasoning}
+          </p>
+          {doctorRecommendation.alternative_specialists.length > 0 && (
+            <p className="inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <Users className="h-3.5 w-3.5" />
+              Also consider: {doctorRecommendation.alternative_specialists.join(', ')}
+            </p>
+          )}
+        </div>
+      ) : specialist ? (
         <p className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
           <Stethoscope className="h-4 w-4" />
           Recommended specialist: {specialist}
         </p>
-      )}
+      ) : null}
     </aside>
   )
 }

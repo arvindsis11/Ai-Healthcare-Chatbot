@@ -26,6 +26,13 @@ class ChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     user_id: Optional[str] = None
     symptoms: Optional[List[str]] = None  # Explicit symptom list
+    preferred_language: Optional[str] = None  # ISO 639-1 code, e.g. "es", "fr"
+
+class DoctorRecommendation(BaseModel):
+    specialist: str
+    confidence: float  # 0.0 - 1.0
+    reasoning: str
+    alternative_specialists: List[str] = []
 
 class ChatResponse(BaseModel):
     response: str
@@ -35,6 +42,7 @@ class ChatResponse(BaseModel):
     symptom_analysis: Optional[SymptomAnalysis] = None
     detected_language: Optional[str] = None
     recommended_specialist: Optional[str] = None
+    doctor_recommendation: Optional[DoctorRecommendation] = None
     disclaimer: str = "This is not medical advice. Please consult a healthcare professional for proper diagnosis and treatment."
 
 class Document(BaseModel):
@@ -46,3 +54,16 @@ class HealthCheck(BaseModel):
     status: str
     timestamp: datetime
     version: str
+
+class HealthReportRequest(BaseModel):
+    conversation_id: str
+    patient_name: Optional[str] = None
+
+class ReportSection(BaseModel):
+    symptoms_detected: List[str]
+    possible_conditions: List[str]
+    suggested_precautions: List[str]
+    when_to_consult_doctor: str
+    summary: str
+    severity_score: Optional[int] = None
+    risk_level: Optional[str] = None
