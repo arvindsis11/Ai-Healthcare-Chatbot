@@ -7,17 +7,44 @@ import json
 import re
 from ..models.chat import SymptomAnalysis, RiskLevel, ReportSection
 
+# Default timeouts per provider (seconds). Applied when llm_timeout_seconds=0.
+_PROVIDER_TIMEOUTS: dict[str, int] = {
+    "openai": 30,     # Cloud API — a hang almost always means an error
+    "lm-studio": 120, # Local inference can be slow, especially on first run
+    "ollama": 120,
+}
+
+
 class LLMService:
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-3.5-turbo",
+        base_url: Optional[str] = None,
+        provider: str = "openai",
+        timeout_seconds: int = 0,
+    ):
         self.api_key = api_key
+        self.provider = provider
         self.llm = None
-        if api_key:
-            self.llm = ChatOpenAI(
-                openai_api_key=api_key,
+
+        effective_timeout = timeout_seconds or _PROVIDER_TIMEOUTS.get(provider, 30)
+
+        # Local providers (lm-studio, ollama) expose an OpenAI-compatible API,
+        # so ChatOpenAI works for all of them — only the base_url and api_key
+        # differ.  A dummy key is used when no real key is required.
+        effective_key = api_key or ("local" if provider != "openai" else "")
+        if effective_key:
+            kwargs = dict(
+                openai_api_key=effective_key,
                 model=model,
                 temperature=0.3,  # Lower temperature for medical advice
-                max_tokens=1500
+                max_tokens=1500,
+                request_timeout=effective_timeout,
             )
+            if base_url:
+                kwargs["openai_api_base"] = base_url
+            self.llm = ChatOpenAI(**kwargs)
 
         # System prompts for different functionalities
         self.medical_system_prompt = """
@@ -42,13 +69,13 @@ class LLMService:
         Analyze the following symptoms and provide a structured assessment.
         Return your response as a JSON object with this exact structure:
 
-        {
+        {{
             "symptoms": ["list", "of", "identified", "symptoms"],
             "severity_score": <number 1-10, where 1 is mild and 10 is life-threatening>,
             "risk_level": "<low|medium|high>",
             "possible_conditions": ["list", "of", "possible", "general", "conditions"],
             "urgency_recommendation": "<recommendation for when to seek medical help>"
-        }
+        }}
 
         Guidelines for scoring:
         - Severity 1-3: Mild symptoms, can usually wait for routine care
@@ -92,6 +119,9 @@ class LLMService:
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 analysis_data = json.loads(json_match.group())
+                # Normalise risk_level to lowercase — some models return "LOW"/"HIGH"
+                if "risk_level" in analysis_data:
+                    analysis_data["risk_level"] = analysis_data["risk_level"].lower()
                 return SymptomAnalysis(**analysis_data)
             else:
                 # Fallback analysis
@@ -227,7 +257,7 @@ class LLMService:
         report_prompt = """Analyze the following patient-chatbot conversation and extract health information.
 Return ONLY a JSON object with this exact structure:
 
-{
+{{
     "symptoms_detected": ["list of symptoms mentioned by the patient"],
     "possible_conditions": ["list of possible general conditions — do not diagnose, only suggest possibilities"],
     "suggested_precautions": ["list of self-care measures and precautions"],
@@ -235,7 +265,7 @@ Return ONLY a JSON object with this exact structure:
     "summary": "2-3 sentence summary of the patient health concern and key findings",
     "severity_score": <integer 1-10 representing overall severity, where 1 is mild and 10 is life-threatening>,
     "risk_level": "<low|medium|high>"
-}
+}}
 
 Severity scoring guidelines:
 - 1-3: Mild, manageable at home

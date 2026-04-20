@@ -26,13 +26,18 @@ _LANGUAGE_TOKENS: Dict[str, list] = {
 class TranslationService:
     supported_languages = SUPPORTED_LANGUAGES
 
-    def __init__(self, api_key: str = ""):
-        self._api_key = api_key
+    def __init__(self, api_key: str = "", base_url: str = "", provider: str = "openai"):
+        self._provider = provider
+        # Local providers don't require a real API key
+        effective_key = api_key or ("local" if provider != "openai" else "")
         self._client = None
-        if api_key:
+        if effective_key:
             try:
                 from openai import OpenAI  # noqa: PLC0415
-                self._client = OpenAI(api_key=api_key)
+                kwargs: Dict[str, str] = {"api_key": effective_key}
+                if base_url:
+                    kwargs["base_url"] = base_url
+                self._client = OpenAI(**kwargs)
             except Exception:
                 pass
 
