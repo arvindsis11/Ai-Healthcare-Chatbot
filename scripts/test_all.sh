@@ -2,7 +2,7 @@
 # Local test runner for the Ai-Healthcare-Chatbot project
 
 echo "--- Running Backend Tests ---"
-pytest tests/ backend/tests/
+PYTHONPATH=./backend pytest tests/ backend/tests/
 
 echo ""
 echo "--- Running Frontend Tests ---"

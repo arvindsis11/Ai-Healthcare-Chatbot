@@ -1,6 +1,7 @@
 # Local test runner for the Ai-Healthcare-Chatbot project (PowerShell)
 
 Write-Host "--- Running Backend Tests ---" -ForegroundColor Cyan
+$env:PYTHONPATH = "./backend"
 pytest tests/ backend/tests/
 
 Write-Host "`n--- Running Frontend Tests ---" -ForegroundColor Cyan
