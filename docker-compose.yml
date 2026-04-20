@@ -4,11 +4,21 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-3.5-turbo}
+      # Set OPENAI_BASE_URL to reach a local LLM from inside the container.
+      # On Windows/macOS Docker Desktop, host.docker.internal resolves automatically.
+      # On Linux, it is provided via extra_hosts below.
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/healthcare
       REDIS_URL: redis://redis:6379/0
       ALLOWED_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+    # Allows the container to reach host.docker.internal on Linux.
+    # On Windows/macOS Docker Desktop this mapping already exists; the extra
+    # entry is harmless there.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
       - redis

@@ -7,17 +7,44 @@ import json
 import re
 from ..models.chat import SymptomAnalysis, RiskLevel, ReportSection
 
+# Default timeouts per provider (seconds). Applied when llm_timeout_seconds=0.
+_PROVIDER_TIMEOUTS: dict[str, int] = {
+    "openai": 30,     # Cloud API — a hang almost always means an error
+    "lm-studio": 120, # Local inference can be slow, especially on first run
+    "ollama": 120,
+}
+
+
 class LLMService:
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "gpt-3.5-turbo",
+        base_url: Optional[str] = None,
+        provider: str = "openai",
+        timeout_seconds: int = 0,
+    ):
         self.api_key = api_key
+        self.provider = provider
         self.llm = None
-        if api_key:
-            self.llm = ChatOpenAI(
-                openai_api_key=api_key,
+
+        effective_timeout = timeout_seconds or _PROVIDER_TIMEOUTS.get(provider, 30)
+
+        # Local providers (lm-studio, ollama) expose an OpenAI-compatible API,
+        # so ChatOpenAI works for all of them — only the base_url and api_key
+        # differ.  A dummy key is used when no real key is required.
+        effective_key = api_key or ("local" if provider != "openai" else "")
+        if effective_key:
+            kwargs = dict(
+                openai_api_key=effective_key,
                 model=model,
                 temperature=0.3,  # Lower temperature for medical advice
-                max_tokens=1500
+                max_tokens=1500,
+                request_timeout=effective_timeout,
             )
+            if base_url:
+                kwargs["openai_api_base"] = base_url
+            self.llm = ChatOpenAI(**kwargs)
 
         # System prompts for different functionalities
         self.medical_system_prompt = """
@@ -92,6 +119,9 @@ class LLMService:
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 analysis_data = json.loads(json_match.group())
+                # Normalise risk_level to lowercase — some models return "LOW"/"HIGH"
+                if "risk_level" in analysis_data:
+                    analysis_data["risk_level"] = analysis_data["risk_level"].lower()
                 return SymptomAnalysis(**analysis_data)
             else:
                 # Fallback analysis

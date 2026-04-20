@@ -12,6 +12,7 @@ from ..services.medical_intelligence_service import (
 )
 from ..services.health_report_service import HealthReportService
 from ..services.rag_service import RAGService
+from .llm_provider import resolve_base_url
 from .settings import settings
 
 
@@ -25,7 +26,14 @@ def get_vector_db() -> VectorDatabase:
 
 @lru_cache
 def get_llm_service() -> LLMService:
-    return LLMService(api_key=settings.openai_api_key, model=settings.openai_model)
+    base_url = resolve_base_url(settings.llm_provider, settings.openai_base_url)
+    return LLMService(
+        api_key=settings.openai_api_key,
+        model=settings.openai_model,
+        base_url=base_url,
+        provider=settings.llm_provider,
+        timeout_seconds=settings.llm_timeout_seconds,
+    )
 
 
 @lru_cache
@@ -35,7 +43,12 @@ def get_rag_service() -> RAGService:
 
 @lru_cache
 def get_translation_service() -> TranslationService:
-    return TranslationService(api_key=settings.openai_api_key)
+    base_url = resolve_base_url(settings.llm_provider, settings.openai_base_url)
+    return TranslationService(
+        api_key=settings.openai_api_key,
+        base_url=base_url or "",
+        provider=settings.llm_provider,
+    )
 
 
 @lru_cache
