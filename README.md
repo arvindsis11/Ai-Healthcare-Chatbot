@@ -73,7 +73,8 @@ All services available at:
 ### 💬 Intelligent Chat
 - **Symptom Analysis** – Automatic symptom extraction with keyword + ML-assisted detection
 - **Risk Triage** – Real-time risk scoring (low 🟢 | medium 🟡 | high 🔴)
-- **Source Citations** – Every response includes clinical sources and evidence excerpts
+- **Medical Knowledge Base** – Integration with **PubMed** for peer-reviewed evidence grounding
+- **Source Citations** – Every response includes clinical sources, PubMed IDs (PMIDs), and evidence excerpts
 - **Conversation History** – Anonymous session persistence and easy restoration
 
 ### 🔐 Security & Safety
@@ -131,6 +132,7 @@ graph TB
 | Feature | Details |
 |---------|---------|
 | **RAG Pipeline** | Semantic search + lexical reranking + chunk-based citations |
+| **Knowledge Base** | Automated **PubMed** fetcher for evidence-based grounding |
 | **Triage System** | Rule-based risk detection (low/medium/high with severity scores) |
 | **Specialist Routing** | Automatic doctor type recommendations based on symptoms |
 | **Session Management** | Anonymous chat history with optional PostgreSQL backing |

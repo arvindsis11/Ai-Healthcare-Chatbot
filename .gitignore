@@ -109,6 +109,17 @@ instance/
 .webassets-cache
 
 # =========================
+# Medical Assistant Specific
+# =========================
+# Vector database and embeddings
+embeddings/
+chroma_db/
+
+# Generated medical knowledge (fetched from PubMed)
+# Note: Keep the folder data/pubmed/ so it can be used, but ignore the big generated YAML
+data/pubmed/pubmed_knowledge.yml
+
+# =========================
 # Editor / OS
 # =========================
 *.sublime-project

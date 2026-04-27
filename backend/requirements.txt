@@ -1,7 +1,7 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 pydantic==2.10.6
-pydantic-settings==2.7.1
+pydantic-settings>=2.5.0
 langchain==0.1.0
 langchain-openai==0.0.6
 chromadb==0.4.18
@@ -11,9 +11,9 @@ python-dotenv==1.0.0
 httpx==0.25.2
 openai>=1.10.0
 pyyaml==6.0.1
-pandas==2.1.4
+pandas>=2.2.3
 tqdm==4.66.1
 redis==5.2.1
 psycopg[binary]==3.2.3
-spacy==3.8.2
+spacy>=3.8.3
 reportlab==4.2.5

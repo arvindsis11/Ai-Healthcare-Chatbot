@@ -26,6 +26,20 @@ class VectorDatabase:
         except Exception:
             self.collection = self.client.create_collection(name=collection_name)
 
+    def _sanitize_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Sanitize metadata to ensure all values are primitive types supported by ChromaDB."""
+        sanitized = {}
+        for key, value in metadata.items():
+            if isinstance(value, (str, int, float, bool)):
+                sanitized[key] = value
+            elif isinstance(value, list):
+                sanitized[key] = ", ".join([str(x) for x in value])
+            elif value is None:
+                sanitized[key] = ""
+            else:
+                sanitized[key] = str(value)
+        return sanitized
+
     def add_documents(self, documents: List[Dict[str, Any]]) -> None:
         """Add documents to the vector database."""
         ids = []
@@ -35,7 +49,7 @@ class VectorDatabase:
 
         for i, doc in enumerate(documents):
             content = doc['content']
-            metadata = doc.get('metadata', {})
+            metadata = self._sanitize_metadata(doc.get('metadata', {}))
 
             # Generate embedding
             embedding = self.embedding_model.encode(content).tolist()

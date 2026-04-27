@@ -3,23 +3,56 @@ from typing import List, Dict, Any
 from pathlib import Path
 
 def load_yaml_files(data_dir: str) -> List[Dict[str, Any]]:
-    """Load all YAML files from the data directory."""
+    """Load all YAML files from the data directory, supporting both flat and structured data."""
     documents = []
     data_path = Path(data_dir)
 
-    for yaml_file in data_path.glob("*.yml"):
+    for yaml_file in data_path.rglob("*.yml"):
         try:
             with open(yaml_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Parse YAML content
-                data = yaml.safe_load(content)
-                if data:
+                try:
+                    # Parse YAML content
+                    data = yaml.load(f, Loader=yaml.SafeLoader)
+                except yaml.YAMLError as e:
+                    print(f"YAML Syntax Error in {yaml_file}: {e}")
+                    continue
+                
+                if not data:
+                    continue
+                
+                # If it's a list of documents (like PubMed data or conversation pairs)
+                if isinstance(data, list):
+                    for item in data:
+                        # If the item is a dictionary (like PubMed abstract)
+                        if isinstance(item, dict):
+                            content = item.get('content', str(item))
+                            item_metadata = item.get('metadata', {})
+                        # If the item is a list (like a Q&A pair [Q, A])
+                        elif isinstance(item, list):
+                            content = "\n".join([str(x) for x in item])
+                            item_metadata = {'type': 'conversation'}
+                        # If the item is something else (like a simple string)
+                        else:
+                            content = str(item)
+                            item_metadata = {}
+
+                        documents.append({
+                            'content': content,
+                            'metadata': {
+                                'source': yaml_file.name,
+                                'topic': yaml_file.stem,
+                                'file_path': str(yaml_file),
+                                **item_metadata
+                            }
+                        })
+                # If it's a single document or simple KV pair
+                else:
                     documents.append({
-                        'content': content,
+                        'content': str(data),
                         'metadata': {
                             'source': yaml_file.name,
                             'topic': yaml_file.stem,
-                            'type': 'conversation',
+                            'type': 'document',
                             'file_path': str(yaml_file)
                         }
                     })

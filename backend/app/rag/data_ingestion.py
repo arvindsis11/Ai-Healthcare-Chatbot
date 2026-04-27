@@ -10,59 +10,43 @@ class DataIngestionPipeline:
         """Process medical content with enhanced chunking for healthcare data."""
         processed_docs = []
 
-        # For medical conversation data, preserve Q&A pairs
-        if metadata.get('type') == 'conversation':
-            # Split into individual Q&A pairs
-            lines = content.strip().split('\n')
-            current_qa = []
-            qa_pairs = []
+        # Metadata-based routing for processing
+        content_type = metadata.get('type', 'unknown')
 
-            for line in lines:
-                line = line.strip()
-                if line.startswith('- - ') or line.startswith('  - '):
-                    if current_qa:
-                        qa_pairs.append('\n'.join(current_qa))
-                        current_qa = []
-                    current_qa.append(line)
-                elif current_qa:
-                    current_qa.append(line)
-
-            if current_qa:
-                qa_pairs.append('\n'.join(current_qa))
-
-            # Create documents from Q&A pairs
-            for qa_pair in qa_pairs:
-                if qa_pair.strip():
-                    processed_docs.append({
-                        'content': qa_pair.strip(),
-                        'metadata': {
-                            **metadata,
-                            'chunk_type': 'qa_pair',
-                            'content_length': len(qa_pair)
-                        }
-                    })
-        else:
-            # For other content, use standard chunking
-            if len(content.split()) > 300:  # If longer than 300 words
-                chunks = chunk_text(content, chunk_size=250, overlap=50)
-                for chunk in chunks:
-                    processed_docs.append({
-                        'content': chunk,
-                        'metadata': {
-                            **metadata,
-                            'chunk_type': 'text_chunk',
-                            'content_length': len(chunk)
-                        }
-                    })
-            else:
+        # 1. For conversation pairs, we keep the Q&A unit intact
+        if content_type == 'conversation':
+            processed_docs.append({
+                'content': content.strip(),
+                'metadata': {
+                    **metadata,
+                    'chunk_type': 'qa_pair',
+                    'content_length': len(content)
+                }
+            })
+        
+        # 2. For longer medical literature or abstracts (e.g., PubMed)
+        elif content_type == 'medical_abstract' or len(content.split()) > 300:
+            chunks = chunk_text(content, chunk_size=250, overlap=50)
+            for chunk in chunks:
                 processed_docs.append({
-                    'content': content,
+                    'content': chunk.strip(),
                     'metadata': {
                         **metadata,
-                        'chunk_type': 'full_text',
-                        'content_length': len(content)
+                        'chunk_type': 'text_chunk',
+                        'content_length': len(chunk)
                     }
                 })
+        
+        # 3. Default for other short documents
+        else:
+            processed_docs.append({
+                'content': content.strip(),
+                'metadata': {
+                    **metadata,
+                    'chunk_type': 'full_text',
+                    'content_length': len(content)
+                }
+            })
 
         return processed_docs
 
