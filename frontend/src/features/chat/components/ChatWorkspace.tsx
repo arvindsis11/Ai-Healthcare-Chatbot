@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, FileDown } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { AlertTriangle, ChevronDown, FileDown, Menu, Moon, Sun } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import InputBar from '../../../components/InputBar'
@@ -12,7 +12,8 @@ import CitationList from './CitationList'
 import ChatHistorySidebar from './ChatHistorySidebar'
 import SymptomAnalysisPanel from './SymptomAnalysisPanel'
 import type { ChatMessage, Conversation } from '../types/chat'
-import LoadingDots from "../../../components/LoadingDots";
+import LoadingDots from '../../../components/LoadingDots'
+import { useTheme } from '../../../contexts/ThemeContext'
 
 const initialMessage: ChatMessage = {
   id: 'welcome',
@@ -30,34 +31,37 @@ export default function ChatWorkspace() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [isDownloadingReport, setIsDownloadingReport] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('auto')
-  
-useEffect(() => {
-  try {
-    const stored = localStorage.getItem("conversations")
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      setConversations(parsed)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isMobileAnalysisOpen, setIsMobileAnalysisOpen] = useState(false)
 
-      if (parsed.length > 0) {
-        setActiveConversationId(parsed[0].id)
+  const { theme, toggle: toggleTheme } = useTheme()
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('conversations')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setConversations(parsed)
+
+        if (parsed.length > 0) {
+          setActiveConversationId(parsed[0].id)
+        }
       }
+    } catch {
+      localStorage.removeItem('conversations')
+    } finally {
+      setIsHydrated(true)
     }
-  } catch {
-    localStorage.removeItem("conversations")
-  } finally {
-    setIsHydrated(true) 
-  }
   }, [])
 
   useEffect(() => {
-  if (!isHydrated) return 
+    if (!isHydrated) return
+    localStorage.setItem('conversations', JSON.stringify(conversations))
+  }, [conversations, isHydrated])
 
-  localStorage.setItem("conversations", JSON.stringify(conversations))
-}, [conversations, isHydrated])
-
-  const historyItems = conversations.map(c => ({
-  id: c.id,
-  label: c.title
+  const historyItems = conversations.map((c) => ({
+    id: c.id,
+    label: c.title,
   }))
 
   const latestAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
@@ -74,11 +78,11 @@ useEffect(() => {
     setIsLoading(true)
 
     try {
-const response = await sendChatMessage({
-  message: content,
-  conversation_id: activeConversationId || undefined,
-  preferred_language: selectedLanguage !== 'auto' ? selectedLanguage : undefined,
-})
+      const response = await sendChatMessage({
+        message: content,
+        conversation_id: activeConversationId || undefined,
+        preferred_language: selectedLanguage !== 'auto' ? selectedLanguage : undefined,
+      })
       const assistantMessage: ChatMessage = {
         id: String(Date.now() + 1),
         role: 'assistant',
@@ -94,13 +98,13 @@ const response = await sendChatMessage({
       if (!activeConversationId) {
         setActiveConversationId(response.conversation_id)
 
-        setConversations(prev => {
-          const exists = prev.some(c => c.id === response.conversation_id)
+        setConversations((prev) => {
+          const exists = prev.some((c) => c.id === response.conversation_id)
           if (exists) return prev
 
           const newConversation = {
             id: response.conversation_id,
-            title: content.slice(0, 40)
+            title: content.slice(0, 40),
           }
 
           return [newConversation, ...prev]
@@ -108,7 +112,6 @@ const response = await sendChatMessage({
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-
     } catch (_error) {
       setMessages((prev) => [
         ...prev,
@@ -142,21 +145,21 @@ const response = await sendChatMessage({
   }
 
   useEffect(() => {
-  if (!activeConversationId) return
-
-  handleSelectConversation(activeConversationId)
+    if (!activeConversationId) return
+    handleSelectConversation(activeConversationId)
   }, [activeConversationId])
 
   const handleSelectConversation = async (id: string) => {
-     setActiveConversationId(id)
+    setActiveConversationId(id)
     try {
       setIsLoading(true)
       const data = await fetchSessionHistory(id)
 
       const loadedMessages: ChatMessage[] = data.messages.map((m: any) => ({
-        id: m.id || `${m.role}-${m.created_at}-${Math.random()}`,        role: m.role,
+        id: m.id || `${m.role}-${m.created_at}-${Math.random()}`,
+        role: m.role,
         content: m.content,
-        timestamp: new Date(m.created_at),       
+        timestamp: new Date(m.created_at),
         symptom_analysis: m.symptom_analysis,
         sources: m.sources || [],
         citations: m.citations || [],
@@ -165,7 +168,7 @@ const response = await sendChatMessage({
 
       setMessages(loadedMessages)
     } catch (error) {
-      console.error("Failed to load conversation", error)
+      console.error('Failed to load conversation', error)
     } finally {
       setIsLoading(false)
     }
@@ -178,37 +181,67 @@ const response = await sendChatMessage({
         activeId={activeConversationId}
         onSelect={handleSelectConversation}
         onNewChat={onNewChat}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="relative flex min-w-0 flex-1 flex-col">
-        <header className="panel-surface flex items-center justify-between border-b border-slate-200/70 px-4 py-4 dark:border-slate-800/70 md:px-8">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">AI Healthcare Platform</h1>
-            <p className="text-sm text-slate-600 dark:text-slate-300">Scalable clinical guidance with retrieval citations and triage signals</p>
-          </div>
+        <header className="panel-surface border-b border-slate-200/70 px-4 py-3 dark:border-slate-800/70 md:px-8">
           <div className="flex items-center gap-3">
-            <LanguageSelector
-              value={selectedLanguage}
-              onChange={setSelectedLanguage}
-              disabled={isLoading}
-            />
-            {activeConversationId && (
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 md:hidden"
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">
+                AI Healthcare Platform
+              </h1>
+              <p className="hidden text-sm text-slate-600 dark:text-slate-300 sm:block">
+                Scalable clinical guidance with retrieval citations and triage signals
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <LanguageSelector
+                value={selectedLanguage}
+                onChange={setSelectedLanguage}
+                disabled={isLoading}
+              />
+
               <button
-                onClick={onDownloadReport}
-                disabled={isDownloadingReport}
-                className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50"
+                type="button"
+                onClick={toggleTheme}
+                className="rounded-lg p-2 text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
-                <FileDown className="h-4 w-4" />
-                {isDownloadingReport ? 'Generating…' : 'Download Report'}
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
-            )}
+
+              {activeConversationId && (
+                <button
+                  onClick={onDownloadReport}
+                  disabled={isDownloadingReport}
+                  className="flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50 dark:border-sky-800 dark:bg-sky-900/30 dark:text-sky-300 dark:hover:bg-sky-900/50"
+                >
+                  <FileDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {isDownloadingReport ? 'Generating…' : 'Download Report'}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
         <div className="border-b border-amber-300/70 bg-amber-50/90 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-900/30 dark:text-amber-200 md:px-8">
           <p className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            This assistant provides educational information only and is not a substitute for professional medical advice.
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>This assistant provides educational information only and is not a substitute for professional medical advice.</span>
           </p>
         </div>
 
@@ -220,8 +253,8 @@ const response = await sendChatMessage({
             className="overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/50 pb-24 dark:border-slate-800/70 dark:bg-slate-900/40"
           >
             {messages.map((message) => (
-                  <div key={message.id}>
-                  <MessageBubble message={message} isLatestAssistant={message.id === latestAssistant?.id} />
+              <div key={message.id}>
+                <MessageBubble message={message} isLatestAssistant={message.id === latestAssistant?.id} />
                 {message.role === 'assistant' && <CitationList citations={message.citations} />}
               </div>
             ))}
@@ -233,6 +266,7 @@ const response = await sendChatMessage({
             )}
           </motion.section>
 
+          {/* Desktop analysis panel */}
           <section className="hidden md:block">
             <SymptomAnalysisPanel
               analysis={latestAssistant?.symptom_analysis}
@@ -241,6 +275,32 @@ const response = await sendChatMessage({
             />
           </section>
         </div>
+
+        {/* Mobile analysis panel — collapsible, only shown when analysis exists */}
+        {latestAssistant?.symptom_analysis && (
+          <div className="border-t border-slate-200/70 dark:border-slate-800/70 md:hidden">
+            <button
+              type="button"
+              onClick={() => setIsMobileAnalysisOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/50"
+              aria-expanded={isMobileAnalysisOpen}
+            >
+              <span>Symptom Analysis</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${isMobileAnalysisOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {isMobileAnalysisOpen && (
+              <div className="px-4 pb-4">
+                <SymptomAnalysisPanel
+                  analysis={latestAssistant?.symptom_analysis}
+                  specialist={latestAssistant?.recommended_specialist}
+                  doctorRecommendation={latestAssistant?.doctor_recommendation}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <InputBar onSend={onSend} disabled={isLoading} />
       </main>
