@@ -187,7 +187,7 @@ class FaceAnalysisService:
             brightness_diff = cheek_brightness - under_eye_brightness
             detected = brightness_diff > 20
 
-            confidence = round(min(brightness_diff / 80, 1.0), 2)
+            confidence = round(max(0.0, min(brightness_diff / 80, 1.0)), 2)
 
             return {
                 "detected": detected,
