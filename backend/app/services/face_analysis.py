@@ -97,55 +97,127 @@ class FaceAnalysisService:
     def _analyze_eye_redness(self, image_bgr, landmarks) -> Dict:
         try:
             h, w = image_bgr.shape[:2]
-            
-            eye_region = image_bgr[
-                int(0.25 * h) : int(0.45 * h),
-                int(0.20 * w) : int(0.80 * w)
-            ]
-            
-            if eye_region.size == 0:
-                return {"detected": False, "confidence": 0.0, "note": "Could not extract eye region"}
-            
-            b, g, r = cv2.split(eye_region)
-            
-            avg_r = float(np.mean(r))
-            avg_g = float(np.mean(g))
-            avg_b = float(np.mean(b))
-            
-            redness_score = avg_r / (avg_g + avg_b + 1e-5)
-            
+
+            # Use landmarks if available, otherwise fall back to percentages
+            if landmarks:
+                # Get exact eye coordinates from Mediapipe
+                lm = landmarks.landmark
+
+                # Left eye corners
+                l_left  = (int(lm[33].x * w),  int(lm[33].y * h))
+                l_right = (int(lm[133].x * w), int(lm[133].y * h))
+                l_top   = (int(lm[159].x * w), int(lm[159].y * h))
+                l_bot   = (int(lm[145].x * w), int(lm[145].y * h))
+
+                # Right eye corners
+                r_left  = (int(lm[362].x * w), int(lm[362].y * h))
+                r_right = (int(lm[263].x * w), int(lm[263].y * h))
+                r_top   = (int(lm[386].x * w), int(lm[386].y * h))
+                r_bot   = (int(lm[374].x * w), int(lm[374].y * h))
+
+                # Add padding around eye region
+                pad = 10
+
+                # Crop left eye region
+                left_eye = image_bgr[
+                    max(0, l_top[1] - pad) : min(h, l_bot[1] + pad),
+                    max(0, l_left[0] - pad) : min(w, l_right[0] + pad)
+                ]
+
+                # Crop right eye region
+                right_eye = image_bgr[
+                    max(0, r_top[1] - pad) : min(h, r_bot[1] + pad),
+                    max(0, r_left[0] - pad) : min(w, r_right[0] + pad)
+                ]
+
+                # Combine both eyes
+                eye_regions = [r for r in [left_eye, right_eye] if r.size > 0]
+
+                if not eye_regions:
+                    return {"detected": False, "confidence": 0.0, "note": "Could not extract eye region"}
+
+                # Analyze redness in both eyes
+                redness_scores = []
+                for eye in eye_regions:
+                    b, g, r = cv2.split(eye)
+                    avg_r = float(np.mean(r))
+                    avg_g = float(np.mean(g))
+                    avg_b = float(np.mean(b))
+                    redness_scores.append(avg_r / (avg_g + avg_b + 1e-5))
+
+                redness_score = float(np.mean(redness_scores))
+
+            else:
+                # Fallback to percentage if no landmarks
+                eye_region = image_bgr[
+                    int(0.25 * h): int(0.45 * h),
+                    int(0.20 * w): int(0.80 * w)
+                ]
+                b, g, r = cv2.split(eye_region)
+                redness_score = float(np.mean(r)) / (float(np.mean(g)) + float(np.mean(b)) + 1e-5)
+
             detected = redness_score > 0.38
-            
+
             return {
                 "detected": detected,
-                "confidence": round(redness_score, 2),
+                "confidence": round(min(redness_score, 1.0), 2),
                 "note": "Possible eye redness detected" if detected else "No significant eye redness"
             }
         except Exception as e:
             logger.error(f"Eye redness analysis error: {e}")
             return {"detected": False, "confidence": 0.0, "note": "Analysis failed"}
         
-        
     def _analyze_pale_skin(self, image_bgr, landmarks) -> Dict:
         try:
             h, w = image_bgr.shape[:2]
 
-            cheek_region = image_bgr[
-                int(0.40 * h): int(0.65 * h),
-                int(0.25 * w): int(0.75 * w)
-            ]
+            if landmarks:
+                lm = landmarks.landmark
 
-            if cheek_region.size == 0:
-                return {"detected": False, "confidence": 0.0, "note": "Could not extract skin region"}
+                # Use exact cheek landmarks
+                left_cheek  = (int(lm[187].x * w), int(lm[187].y * h))
+                right_cheek = (int(lm[411].x * w), int(lm[411].y * h))
 
-            # Convert to HSV — S channel tells us color vividness
-            hsv = cv2.cvtColor(cheek_region, cv2.COLOR_BGR2HSV)
-            saturation = hsv[:, :, 1]   # index 1 = S channel
+                pad = 20
 
-            avg_saturation = float(np.mean(saturation))
+                # Crop left cheek region
+                left_region = image_bgr[
+                    max(0, left_cheek[1] - pad) : min(h, left_cheek[1] + pad),
+                    max(0, left_cheek[0] - pad) : min(w, left_cheek[0] + pad)
+                ]
 
-            # Low saturation = pale skin
-            detected = avg_saturation < 40
+                # Crop right cheek region
+                right_region = image_bgr[
+                    max(0, right_cheek[1] - pad) : min(h, right_cheek[1] + pad),
+                    max(0, right_cheek[0] - pad) : min(w, right_cheek[0] + pad)
+                ]
+
+                # Combine both cheeks
+                regions = [r for r in [left_region, right_region] if r.size > 0]
+
+                if not regions:
+                    return {"detected": False, "confidence": 0.0, "note": "Could not extract skin region"}
+
+                # Measure saturation of both cheeks
+                saturations = []
+                for region in regions:
+                    hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV)
+                    saturations.append(float(np.mean(hsv[:, :, 1])))
+
+                avg_saturation = float(np.mean(saturations))
+
+            else:
+                # Fallback
+                cheek_region = image_bgr[
+                    int(0.40 * h): int(0.65 * h),
+                    int(0.25 * w): int(0.75 * w)
+                ]
+                hsv = cv2.cvtColor(cheek_region, cv2.COLOR_BGR2HSV)
+                avg_saturation = float(np.mean(hsv[:, :, 1]))
+
+            # print(f"DEBUG pale skin avg_saturation: {avg_saturation}")
+
+            detected = avg_saturation < 80
 
             return {
                 "detected": detected,
@@ -155,38 +227,71 @@ class FaceAnalysisService:
         except Exception as e:
             logger.error(f"Pale skin analysis error: {e}")
             return {"detected": False, "confidence": 0.0, "note": "Analysis failed"}
-
-
+        
     def _analyze_dark_circles(self, image_bgr, landmarks) -> Dict:
         try:
             h, w = image_bgr.shape[:2]
 
-            # Under eye region
-            under_eye = image_bgr[
-                int(0.42 * h): int(0.52 * h),
-                int(0.25 * w): int(0.75 * w)
-            ]
+            if landmarks:
+                lm = landmarks.landmark
 
-            # Cheek region — reference brightness
-            cheek = image_bgr[
-                int(0.55 * h): int(0.70 * h),
-                int(0.25 * w): int(0.75 * w)
-            ]
+                # Exact under-eye landmarks
+                left_under  = (int(lm[253].x * w), int(lm[253].y * h))
+                right_under = (int(lm[380].x * w), int(lm[380].y * h))
 
-            if under_eye.size == 0 or cheek.size == 0:
-                return {"detected": False, "confidence": 0.0, "note": "Could not extract regions"}
+                # Exact cheek landmarks for reference brightness
+                left_cheek  = (int(lm[187].x * w), int(lm[187].y * h))
+                right_cheek = (int(lm[411].x * w), int(lm[411].y * h))
 
-            # Convert to grayscale — measure brightness only
-            under_eye_gray = cv2.cvtColor(under_eye, cv2.COLOR_BGR2GRAY)
-            cheek_gray     = cv2.cvtColor(cheek, cv2.COLOR_BGR2GRAY)
+                pad = 15
 
-            under_eye_brightness = float(np.mean(under_eye_gray))
-            cheek_brightness     = float(np.mean(cheek_gray))
+                # Crop under eye regions
+                left_under_region = image_bgr[
+                    max(0, left_under[1] - pad) : min(h, left_under[1] + pad),
+                    max(0, left_under[0] - pad) : min(w, left_under[0] + pad)
+                ]
+                right_under_region = image_bgr[
+                    max(0, right_under[1] - pad) : min(h, right_under[1] + pad),
+                    max(0, right_under[0] - pad) : min(w, right_under[0] + pad)
+                ]
 
-            # YOUR idea — compare brightness difference
-            brightness_diff = cheek_brightness - under_eye_brightness
-            detected = brightness_diff > 20
+                # Crop cheek regions
+                left_cheek_region = image_bgr[
+                    max(0, left_cheek[1] - pad) : min(h, left_cheek[1] + pad),
+                    max(0, left_cheek[0] - pad) : min(w, left_cheek[0] + pad)
+                ]
+                right_cheek_region = image_bgr[
+                    max(0, right_cheek[1] - pad) : min(h, right_cheek[1] + pad),
+                    max(0, right_cheek[0] - pad) : min(w, right_cheek[0] + pad)
+                ]
 
+                # Measure brightness of under-eye vs cheeks
+                under_regions = [r for r in [left_under_region, right_under_region] if r.size > 0]
+                cheek_regions = [r for r in [left_cheek_region, right_cheek_region] if r.size > 0]
+
+                if not under_regions or not cheek_regions:
+                    return {"detected": False, "confidence": 0.0, "note": "Could not extract regions"}
+
+                under_brightness = float(np.mean([
+                    np.mean(cv2.cvtColor(r, cv2.COLOR_BGR2GRAY)) 
+                    for r in under_regions
+                ]))
+                cheek_brightness = float(np.mean([
+                    np.mean(cv2.cvtColor(r, cv2.COLOR_BGR2GRAY)) 
+                    for r in cheek_regions
+                ]))
+
+            else:
+                # Fallback
+                under_eye = image_bgr[int(0.42*h):int(0.52*h), int(0.25*w):int(0.75*w)]
+                cheek     = image_bgr[int(0.55*h):int(0.70*h), int(0.25*w):int(0.75*w)]
+                under_brightness = float(np.mean(cv2.cvtColor(under_eye, cv2.COLOR_BGR2GRAY)))
+                cheek_brightness = float(np.mean(cv2.cvtColor(cheek, cv2.COLOR_BGR2GRAY)))
+
+            brightness_diff = cheek_brightness - under_brightness
+            # print(f"DEBUG dark circles brightness_diff: {brightness_diff}")
+
+            detected = brightness_diff > 10
             confidence = round(max(0.0, min(brightness_diff / 80, 1.0)), 2)
 
             return {
@@ -198,23 +303,18 @@ class FaceAnalysisService:
             logger.error(f"Dark circles analysis error: {e}")
             return {"detected": False, "confidence": 0.0, "note": "Analysis failed"}
 
-
     def _analyze_fatigue(self, indicators: Dict) -> Dict:
-        # YOUR idea — combine all 3 indicators
         detected_count = sum(
             1 for key in ["eye_redness", "pale_skin", "dark_circles"]
             if indicators.get(key, {}).get("detected", False)
         )
-
         detected = detected_count >= 2
         confidence = round(detected_count / 3, 2)
-
         return {
             "detected": detected,
             "confidence": confidence,
             "note": f"{detected_count}/3 fatigue indicators present. {'Possible fatigue detected.' if detected else 'No significant fatigue signs.'}"
         }
-
 
     def _build_summary(self, indicators: Dict) -> List[str]:
         summary = []
@@ -225,7 +325,6 @@ class FaceAnalysisService:
             summary.append("No significant health indicators detected.")
         return summary
 
-
     def _error_response(self, message: str) -> Dict:
         return {
             "face_detected": False,
@@ -235,6 +334,12 @@ class FaceAnalysisService:
         }
 
     def _unavailable_response(self, reason: str) -> Dict:
+        return {
+            "face_detected": False,
+            "indicators": {},
+            "overall_summary": [f"Face analysis unavailable: {reason}"],
+            "disclaimer": "These results are informational only and not a medical diagnosis."
+        }
         return {
             "face_detected": False,
             "indicators": {},
