@@ -29,15 +29,16 @@ Before you begin, make sure you have the following installed:
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Install backend dependencies
-pip install -r backend/requirements.txt
+# Install backend dependencies (production + dev/test)
+pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 
 # Download the spaCy English model (required for symptom extraction)
 python -m spacy download en_core_web_sm
 
 # Configure environment variables
 cp .env.example .env
-# Edit .env — at minimum set OPENAI_API_KEY for LLM responses
+# Edit .env — set OPENAI_API_KEY for OpenAI, or configure a local LLM
+# (LM Studio / Ollama) — see docs/SETUP.md for details
 
 # Seed the ChromaDB knowledge base
 python scripts/ingest_data.py
