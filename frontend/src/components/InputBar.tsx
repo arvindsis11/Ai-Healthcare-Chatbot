@@ -102,7 +102,7 @@ export default function InputBar({ onSend, disabled = false }: InputBarProps) {
           <Send className="h-5 w-5" />
         </button>
       </div>
-      <p className="mx-auto mt-2 w-full max-w-4xl px-2 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mx-auto mt-2 hidden w-full max-w-4xl px-2 text-xs text-slate-500 dark:text-slate-400 sm:block">
         Press Enter to send, Shift+Enter for a new line.
       </p>
     </div>
