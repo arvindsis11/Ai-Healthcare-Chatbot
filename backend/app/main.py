@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.chat import router as chat_router
 from .api.reports import router as reports_router
+from .api.face_analysis import router as face_analysis_router
 from .core.logging import configure_logging
 from .core.llm_provider import resolve_base_url, validate_provider_connectivity
 from .core.settings import settings
@@ -46,6 +47,7 @@ app.add_middleware(
 
 app.include_router(chat_router, prefix="/api/v1", tags=["chat"])
 app.include_router(reports_router, prefix="/api/v1", tags=["reports"])
+app.include_router(face_analysis_router, prefix="/api/v1", tags=["face-analysis"])
 
 
 @app.get("/")
