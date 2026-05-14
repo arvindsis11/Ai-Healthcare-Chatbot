@@ -1,11 +1,28 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    # OpenAI
+    # LLM Provider
+    # Supported values: "openai", "lm-studio", "ollama"
+    llm_provider: Literal["openai", "lm-studio", "ollama"] = "openai"
+
+    # OpenAI / local LLM
     openai_api_key: str = ""
     openai_model: str = "gpt-3.5-turbo"
+    # Base URL for the chat-completions endpoint.
+    # Leave blank to use the provider default:
+    #   openai    -> https://api.openai.com/v1
+    #   lm-studio -> http://localhost:1234/v1
+    #   ollama    -> http://localhost:11434/v1
+    openai_base_url: str = ""
+    # Request timeout in seconds for LLM API calls.
+    # 0 means use the provider default:
+    #   openai    -> 30s  (fast API; a hang almost always means an error)
+    #   lm-studio -> 120s (local inference can be slow, especially on first run)
+    #   ollama    -> 120s
+    llm_timeout_seconds: int = 0
 
     # ChromaDB
     chroma_persist_directory: str = "./embeddings"

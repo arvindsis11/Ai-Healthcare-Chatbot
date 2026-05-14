@@ -44,7 +44,8 @@ cd Ai-Healthcare-Chatbot
 
 # Configure environment
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY (required for LLM responses)
+# Edit .env — set OPENAI_API_KEY for OpenAI, or configure a local LLM
+# (LM Studio / Ollama) — see docs/SETUP.md for details
 
 # Start backend
 ./setup.sh
