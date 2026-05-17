@@ -24,6 +24,10 @@ def test_symptom_extraction(symptom_service):
     assert "fever" in extracted
     assert "chest pain" in extracted
 
+def test_symptom_extraction_no_false_positive(symptom_service):
+    extracted = symptom_service.extract("I feel fine today, no issues.")
+    assert extracted == []
+
 def test_triage_high_risk(triage_service):
     symptoms = ["chest pain", "shortness of breath"]
     analysis = triage_service.assess(symptoms)
