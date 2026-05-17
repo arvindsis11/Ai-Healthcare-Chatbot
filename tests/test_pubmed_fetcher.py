@@ -31,7 +31,8 @@ SAMPLE_XML = """
 """
 
 def test_parse_pubmed_xml():
-    articles = parse_pubmed_xml(SAMPLE_XML)
+    topic = "fever management"
+    articles = parse_pubmed_xml(SAMPLE_XML, topic=topic)
     assert len(articles) == 1
     article = articles[0]
     
@@ -41,6 +42,7 @@ def test_parse_pubmed_xml():
     assert article["metadata"]["authors"] == ["John Smith"]
     assert article["metadata"]["year"] == "2023"
     assert article["metadata"]["source"] == "pubmed"
+    assert article["metadata"]["topic"] == topic
 
 def test_parse_empty_xml():
     articles = parse_pubmed_xml("")

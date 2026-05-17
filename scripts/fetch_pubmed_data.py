@@ -63,7 +63,7 @@ async def fetch_pubmed_abstracts(client: httpx.AsyncClient, pmids: List[str]) ->
         logger.error(f"Error fetching abstracts for PMIDs {pmids}: {e}")
         return ""
 
-def parse_pubmed_xml(xml_content: str) -> List[Dict[str, Any]]:
+def parse_pubmed_xml(xml_content: str, topic: str = "Medical Literature") -> List[Dict[str, Any]]:
     """Parse PubMed XML and extract metadata and abstracts."""
     if not xml_content:
         return []
@@ -73,9 +73,16 @@ def parse_pubmed_xml(xml_content: str) -> List[Dict[str, Any]]:
     
     for article_tag in root.findall(".//PubmedArticle"):
         try:
-            # Basic metadata
-            pmid = article_tag.find(".//PMID").text
-            title = article_tag.find(".//ArticleTitle").text
+            # Basic metadata with safety checks
+            pmid_el = article_tag.find(".//PMID")
+            title_el = article_tag.find(".//ArticleTitle")
+            
+            if pmid_el is None or title_el is None:
+                logger.warning("Skipping article with missing PMID or title")
+                continue
+                
+            pmid = pmid_el.text
+            title = title_el.text
             
             # Abstract extraction (handling multiple parts)
             abstract_parts = article_tag.findall(".//AbstractText")
@@ -101,7 +108,7 @@ def parse_pubmed_xml(xml_content: str) -> List[Dict[str, Any]]:
                     "pmid": pmid,
                     "authors": authors,
                     "year": year,
-                    "topic": "Medical Literature",
+                    "topic": topic,
                     "type": "medical_abstract"
                 }
             })
@@ -129,7 +136,7 @@ async def main():
             if pmids:
                 logger.info(f"Found {len(pmids)} PMIDs. Fetching details...")
                 xml_content = await fetch_pubmed_abstracts(client, pmids)
-                articles = parse_pubmed_xml(xml_content)
+                articles = parse_pubmed_xml(xml_content, topic=term)
                 all_articles.extend(articles)
                 
                 # Additional delay after fetching abstracts
