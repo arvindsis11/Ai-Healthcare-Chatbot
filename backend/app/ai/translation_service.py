@@ -26,20 +26,32 @@ _LANGUAGE_TOKENS: Dict[str, list] = {
 class TranslationService:
     supported_languages = SUPPORTED_LANGUAGES
 
-    def __init__(self, api_key: str = "", base_url: str = "", provider: str = "openai"):
+    def __init__(self, api_key: str = "", base_url: str = "", provider: str = "openai", model: str = "gpt-3.5-turbo"):
         self._provider = provider
-        # Local providers don't require a real API key
-        effective_key = api_key or ("local" if provider != "openai" else "")
+        self._model = model
         self._client = None
-        if effective_key:
-            try:
-                from openai import OpenAI  # noqa: PLC0415
-                kwargs: Dict[str, str] = {"api_key": effective_key}
-                if base_url:
-                    kwargs["base_url"] = base_url
-                self._client = OpenAI(**kwargs)
-            except Exception:
-                pass
+        self._litellm = None
+
+        if provider == "litellm":
+            # LiteLLM handles routing internally; no OpenAI client needed.
+            # Provider-specific API keys are read from env vars by LiteLLM.
+            # Only enable it if the required key is present — otherwise leave
+            # _litellm as None so translation falls back to passthrough.
+            import litellm  # noqa: PLC0415
+            if litellm.validate_environment(model).get("keys_in_environment"):
+                self._litellm = litellm
+        else:
+            # Local providers don't require a real API key
+            effective_key = api_key or ("local" if provider != "openai" else "")
+            if effective_key:
+                try:
+                    from openai import OpenAI  # noqa: PLC0415
+                    kwargs: Dict[str, str] = {"api_key": effective_key}
+                    if base_url:
+                        kwargs["base_url"] = base_url
+                    self._client = OpenAI(**kwargs)
+                except Exception:
+                    pass
 
     def detect_language(self, text: str) -> str:
         stripped = text.strip().lower()
@@ -53,14 +65,33 @@ class TranslationService:
             return max(scores, key=lambda k: scores[k])
         return "en"
 
+    def _chat_completion(self, messages: list, max_tokens: int) -> str:
+        """Call the configured provider and return the assistant message content."""
+        if self._litellm:
+            result = self._litellm.completion(
+                model=self._model,
+                messages=messages,
+                temperature=0,
+                max_tokens=max_tokens,
+            )
+            return result.choices[0].message.content.strip()
+        if self._client:
+            result = self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                temperature=0,
+                max_tokens=max_tokens,
+            )
+            return result.choices[0].message.content.strip()
+        return ""
+
     def translate_to_english(self, text: str, source_lang: str) -> str:
         if source_lang == "en" or not text.strip():
             return text
-        if self._client:
+        if self._litellm or self._client:
             try:
                 lang_name = self.supported_languages.get(source_lang, source_lang)
-                result = self._client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                return self._chat_completion(
                     messages=[
                         {
                             "role": "system",
@@ -71,10 +102,8 @@ class TranslationService:
                         },
                         {"role": "user", "content": text},
                     ],
-                    temperature=0,
                     max_tokens=600,
                 )
-                return result.choices[0].message.content.strip()
             except Exception:
                 pass
         return text
@@ -82,11 +111,10 @@ class TranslationService:
     def translate_from_english(self, text: str, target_lang: str) -> str:
         if target_lang == "en" or not text.strip():
             return text
-        if self._client:
+        if self._litellm or self._client:
             try:
                 lang_name = self.supported_languages.get(target_lang, target_lang)
-                result = self._client.chat.completions.create(
-                    model="gpt-3.5-turbo",
+                return self._chat_completion(
                     messages=[
                         {
                             "role": "system",
@@ -97,10 +125,8 @@ class TranslationService:
                         },
                         {"role": "user", "content": text},
                     ],
-                    temperature=0,
                     max_tokens=2000,
                 )
-                return result.choices[0].message.content.strip()
             except Exception:
                 pass
         return text

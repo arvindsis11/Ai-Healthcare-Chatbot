@@ -4,14 +4,18 @@ from langchain.schema import StrOutputParser
 from langchain.schema.runnable import RunnablePassthrough
 from typing import List, Optional
 import json
+import logging
 import re
 from ..models.chat import SymptomAnalysis, RiskLevel, ReportSection
+
+logger = logging.getLogger(__name__)
 
 # Default timeouts per provider (seconds). Applied when llm_timeout_seconds=0.
 _PROVIDER_TIMEOUTS: dict[str, int] = {
     "openai": 30,     # Cloud API — a hang almost always means an error
     "lm-studio": 120, # Local inference can be slow, especially on first run
     "ollama": 120,
+    "litellm": 60,    # Cloud API via LiteLLM proxy; generous default for slower providers
 }
 
 
@@ -30,21 +34,48 @@ class LLMService:
 
         effective_timeout = timeout_seconds or _PROVIDER_TIMEOUTS.get(provider, 30)
 
-        # Local providers (lm-studio, ollama) expose an OpenAI-compatible API,
-        # so ChatOpenAI works for all of them — only the base_url and api_key
-        # differ.  A dummy key is used when no real key is required.
-        effective_key = api_key or ("local" if provider != "openai" else "")
-        if effective_key:
-            kwargs = dict(
-                openai_api_key=effective_key,
-                model=model,
-                temperature=0.3,  # Lower temperature for medical advice
-                max_tokens=1500,
-                request_timeout=effective_timeout,
-            )
-            if base_url:
-                kwargs["openai_api_base"] = base_url
-            self.llm = ChatOpenAI(**kwargs)
+        if provider == "litellm":
+            # LiteLLM routes to any provider (Anthropic, Gemini, …) via the model
+            # string (e.g. "anthropic/claude-sonnet-4-6"). Provider-specific API
+            # keys are read from env vars automatically by the LiteLLM library.
+            #
+            # Only build the model if the required key is present. Otherwise
+            # leave self.llm as None so the service degrades to fallback mode —
+            # consistent with the OpenAI provider when OPENAI_API_KEY is unset.
+            import litellm  # noqa: PLC0415
+            env_status = litellm.validate_environment(model)
+            if env_status.get("keys_in_environment"):
+                from langchain_community.chat_models import ChatLiteLLM  # noqa: PLC0415
+                self.llm = ChatLiteLLM(
+                    model=model,
+                    temperature=0.3,
+                    max_tokens=1500,
+                    request_timeout=effective_timeout,
+                )
+            else:
+                logger.warning(
+                    "LLM provider 'litellm' selected for model '%s' but required "
+                    "API key(s) are missing from the environment: %s. Running in "
+                    "fallback mode. See docs/SETUP.md for setup instructions.",
+                    model,
+                    env_status.get("missing_keys"),
+                )
+        else:
+            # Local providers (lm-studio, ollama) expose an OpenAI-compatible API,
+            # so ChatOpenAI works for all of them — only the base_url and api_key
+            # differ.  A dummy key is used when no real key is required.
+            effective_key = api_key or ("local" if provider != "openai" else "")
+            if effective_key:
+                kwargs = dict(
+                    openai_api_key=effective_key,
+                    model=model,
+                    temperature=0.3,  # Lower temperature for medical advice
+                    max_tokens=1500,
+                    request_timeout=effective_timeout,
+                )
+                if base_url:
+                    kwargs["openai_api_base"] = base_url
+                self.llm = ChatOpenAI(**kwargs)
 
         # System prompts for different functionalities
         self.medical_system_prompt = """
