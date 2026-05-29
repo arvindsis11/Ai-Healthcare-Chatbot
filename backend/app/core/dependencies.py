@@ -48,6 +48,7 @@ def get_translation_service() -> TranslationService:
         api_key=settings.openai_api_key,
         base_url=base_url or "",
         provider=settings.llm_provider,
+        model=settings.openai_model,
     )
 
 

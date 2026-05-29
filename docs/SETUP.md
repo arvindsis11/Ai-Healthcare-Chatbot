@@ -66,7 +66,7 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `openai` | Which LLM backend to use: `openai`, `lm-studio`, or `ollama` |
+| `LLM_PROVIDER` | `openai` | Which LLM backend to use: `openai`, `lm-studio`, `ollama`, or `litellm` |
 | `OPENAI_API_KEY` | _(empty)_ | Required when `LLM_PROVIDER=openai`. Not needed for local providers. |
 | `OPENAI_MODEL` | `gpt-3.5-turbo` | Model name passed to the LLM server. |
 | `OPENAI_BASE_URL` | _(empty)_ | Base URL for local providers. Leave blank to use the provider default. |
@@ -123,6 +123,32 @@ OPENAI_MODEL=llama3
 OPENAI_BASE_URL=http://localhost:11434/v1
 ```
 
+### LiteLLM (Anthropic, Gemini, Cohere, and 100+ others)
+
+LiteLLM is a unified translation layer that makes any provider speak the OpenAI API. Set `LLM_PROVIDER=litellm` and use a provider-prefixed model string in `OPENAI_MODEL`.
+
+**Anthropic Claude:**
+
+```env
+LLM_PROVIDER=litellm
+OPENAI_MODEL=anthropic/claude-sonnet-4-6
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+**Google Gemini:**
+
+```env
+LLM_PROVIDER=litellm
+OPENAI_MODEL=gemini/gemini-2.0-flash
+GEMINI_API_KEY=...
+```
+
+LiteLLM reads the provider-specific API key from environment variables automatically — no `OPENAI_API_KEY` or `OPENAI_BASE_URL` needed.
+
+For a full list of supported providers and model string formats, see the [LiteLLM provider docs](https://docs.litellm.ai/docs/providers).
+
+---
+
 ### Docker networking
 
 When running inside Docker, the backend container cannot reach `localhost` on the host machine. Use `host.docker.internal` as the hostname instead:
@@ -150,6 +176,7 @@ Local models are significantly slower than the OpenAI API — first inference ca
 | `openai` | 30s |
 | `lm-studio` | 120s |
 | `ollama` | 120s |
+| `litellm` | 60s |
 
 Override with `LLM_TIMEOUT_SECONDS` in your `.env` if your hardware needs more or less time.
 

@@ -13,11 +13,12 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Default base URLs per provider
-_PROVIDER_DEFAULTS: dict[str, str] = {
+# Default base URLs per provider (None = let the SDK use its own default)
+_PROVIDER_DEFAULTS: dict[str, Optional[str]] = {
     "openai": "https://api.openai.com/v1",
     "lm-studio": "http://localhost:1234/v1",
     "ollama": "http://localhost:11434/v1",
+    "litellm": None,  # LiteLLM routes internally via the model string; no base URL needed
 }
 
 # Providers that require a reachability check on startup

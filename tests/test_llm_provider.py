@@ -259,3 +259,122 @@ class TestSettings:
         from backend.app.core.settings import Settings
         s = Settings()
         assert s.openai_base_url == ""
+
+    def test_litellm_provider_accepted(self):
+        """'litellm' is a valid provider value."""
+        from backend.app.core.settings import Settings
+        s = Settings(llm_provider="litellm")
+        assert s.llm_provider == "litellm"
+
+
+# ---------------------------------------------------------------------------
+# LiteLLM provider — resolve_base_url and LLMService wiring
+# ---------------------------------------------------------------------------
+
+class TestLiteLLMProviderSupport:
+    def test_resolve_base_url_litellm_returns_none(self):
+        """LiteLLM provider should return None — routing is handled internally by the library."""
+        assert resolve_base_url("litellm", "") is None
+
+    def test_resolve_base_url_litellm_ignores_override(self):
+        """An explicit base URL override is passed through even for litellm.
+
+        This allows advanced users to point at a self-hosted LiteLLM proxy.
+        """
+        assert resolve_base_url("litellm", "http://my-litellm-proxy/v1") == "http://my-litellm-proxy/v1"
+
+    def test_litellm_provider_skips_connectivity_check(self):
+        """LiteLLM is a cloud routing library — no startup ping should be performed."""
+        with patch("urllib.request.urlopen") as mock_open:
+            validate_provider_connectivity("litellm", "")
+            mock_open.assert_not_called()
+
+    @staticmethod
+    def _mock_litellm(keys_in_environment: bool = True):
+        """Build a fake `litellm` module whose validate_environment is controllable.
+
+        validate_environment reports whether the provider's API key is present;
+        the service code uses it to decide between live mode and fallback mode.
+        """
+        mock = MagicMock()
+        mock.validate_environment.return_value = {
+            "keys_in_environment": keys_in_environment,
+            "missing_keys": [] if keys_in_environment else ["ANTHROPIC_API_KEY"],
+        }
+        return mock
+
+    def test_llm_service_litellm_uses_chat_litellm(self):
+        """With a key present, LLMService must instantiate ChatLiteLLM, not ChatOpenAI."""
+        with patch("backend.app.services.llm_service.ChatOpenAI") as MockChatOpenAI, \
+             patch("langchain_community.chat_models.ChatLiteLLM") as MockChatLiteLLM, \
+             patch.dict("sys.modules", {"litellm": self._mock_litellm(keys_in_environment=True)}):
+            from backend.app.services.llm_service import LLMService
+            svc = LLMService(
+                api_key="",
+                model="anthropic/claude-sonnet-4-6",
+                provider="litellm",
+            )
+            MockChatOpenAI.assert_not_called()
+            assert svc.llm is not None
+
+    def test_llm_service_litellm_passes_model_string(self):
+        """ChatLiteLLM must receive the full provider-prefixed model string."""
+        with patch("langchain_community.chat_models.ChatLiteLLM") as MockChatLiteLLM, \
+             patch.dict("sys.modules", {"litellm": self._mock_litellm(keys_in_environment=True)}):
+            from backend.app.services.llm_service import LLMService
+            LLMService(
+                api_key="",
+                model="anthropic/claude-sonnet-4-6",
+                provider="litellm",
+            )
+            call_kwargs = MockChatLiteLLM.call_args.kwargs
+            assert call_kwargs["model"] == "anthropic/claude-sonnet-4-6"
+
+    def test_llm_service_litellm_missing_key_falls_back(self):
+        """Without the required API key, LLMService must stay in fallback mode (llm is None).
+
+        This mirrors the OpenAI provider behaviour when OPENAI_API_KEY is unset,
+        so a misconfigured litellm provider degrades gracefully instead of
+        crashing on the first request.
+        """
+        with patch("langchain_community.chat_models.ChatLiteLLM") as MockChatLiteLLM, \
+             patch.dict("sys.modules", {"litellm": self._mock_litellm(keys_in_environment=False)}):
+            from backend.app.services.llm_service import LLMService
+            svc = LLMService(
+                api_key="",
+                model="anthropic/claude-sonnet-4-6",
+                provider="litellm",
+            )
+            MockChatLiteLLM.assert_not_called()
+            assert svc.llm is None
+
+    def test_translation_service_litellm_uses_litellm_completion(self):
+        """TranslationService must use litellm.completion(), not the OpenAI client."""
+        mock_litellm = self._mock_litellm(keys_in_environment=True)
+        mock_litellm.completion.return_value.choices[0].message.content = "Hello"
+        with patch.dict("sys.modules", {"litellm": mock_litellm}):
+            from backend.app.ai.translation_service import TranslationService
+            svc = TranslationService(
+                api_key="",
+                provider="litellm",
+                model="anthropic/claude-sonnet-4-6",
+            )
+            result = svc.translate_to_english("Hola", "es")
+            assert result == "Hello"
+            mock_litellm.completion.assert_called_once()
+            assert mock_litellm.completion.call_args.kwargs["model"] == "anthropic/claude-sonnet-4-6"
+
+    def test_translation_service_litellm_no_openai_client(self):
+        """TranslationService with litellm provider must not create an OpenAI client."""
+        with patch.dict("sys.modules", {"litellm": self._mock_litellm(keys_in_environment=True)}):
+            from backend.app.ai.translation_service import TranslationService
+            svc = TranslationService(api_key="", provider="litellm", model="anthropic/claude-sonnet-4-6")
+            assert svc._client is None
+
+    def test_translation_service_litellm_missing_key_passthrough(self):
+        """Without the required API key, TranslationService returns text unchanged."""
+        with patch.dict("sys.modules", {"litellm": self._mock_litellm(keys_in_environment=False)}):
+            from backend.app.ai.translation_service import TranslationService
+            svc = TranslationService(api_key="", provider="litellm", model="anthropic/claude-sonnet-4-6")
+            assert svc._litellm is None
+            assert svc.translate_to_english("Hola", "es") == "Hola"
