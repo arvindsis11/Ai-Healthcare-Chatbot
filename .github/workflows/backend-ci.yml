@@ -15,6 +15,9 @@ on:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    env:
+      # Use Node 24 for JavaScript actions to clear deprecation warnings
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,7 +34,9 @@ jobs:
           pip install pytest ruff
 
       - name: Run tests
-        run: pytest tests/
+        env:
+          PYTHONPATH: ./backend
+        run: pytest tests/ backend/tests/
 
       - name: Lint backend
         run: ruff check backend

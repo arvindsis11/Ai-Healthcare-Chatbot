@@ -22,3 +22,5 @@ spacy==3.8.2
 reportlab==4.2.5
 opencv-python==4.9.0.80
 mediapipe==0.10.9
+litellm>=1.0.0
+langchain-community>=0.0.20,<0.1
