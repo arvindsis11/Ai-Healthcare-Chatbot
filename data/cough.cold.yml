@@ -9,7 +9,7 @@
 - - No, i am still not felling better after having sudafed tablet.
   - Ok, its not just a normal cold, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
 
 - - I have a cough.
   - You should take a spoon full of benadryl after your meal.
@@ -20,8 +20,8 @@
 - - No, i am still not felling better after having benadryl.
   - Ok, its not just a normal cough, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:' 
-  - 
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
+
 - - I have a cold.
   - You should take a sudafed tablet after your meal.
 - - Ok, i will take the sudafed tablet.
@@ -31,7 +31,7 @@
 - - No, i am still not felling better after having sudafed tablet.
   - Ok, its not just a normal cold, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
 
 - - My chest is aching.
   - Okay, this is a symptom of cough , do you have cough?
@@ -44,7 +44,7 @@
 - - No, i am still not felling better after having benadryl.
   - Ok, its not just a normal cough, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:' 
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
 
 - - My nose is itching.
   - Okay, this is a symptom of cold, do you have cold?
@@ -57,7 +57,7 @@
 - - No, i am still not felling better after having sudafed tablet.
   - Ok, its not just a normal cold, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
 
 - - My throat is itching.
   - Okay, this is a symptom of cough , do you have cough?
@@ -70,5 +70,4 @@
 - - No, i am still not felling better after having benadryl.
   - Ok, its not just a normal cough, you should consult a doctor.
 - - Can u book an appointment for me.
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
-- - 
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"

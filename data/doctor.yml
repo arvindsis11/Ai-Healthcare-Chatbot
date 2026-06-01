@@ -5,7 +5,7 @@
 - - i want to talk to a doctor
   - you shall be called once the doctor is available. Do you want to book an appointment?
 - - can you book an apointment with a doctor?
-  - yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'
+  - "yes please state time and doctor's name in the following format; 'Patient Name:  Date:  Doctor: Hospital:'"
 - - Patient Name Date Time Doctor Hospital
   - appointment details saved. you shall be contacted shortly.
 - - thanks

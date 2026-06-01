@@ -5,7 +5,11 @@ Loads YAML data and creates vector embeddings with medical-specific processing.
 """
 
 import sys
+import os
 from pathlib import Path
+
+# Suppress ChromaDB telemetry warnings
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 
 # Add backend to path
 repo_root = Path(__file__).resolve().parents[1]
@@ -28,7 +32,7 @@ def main():
     pipeline = DataIngestionPipeline(vector_db)
 
     # Data directory
-    data_dir = Path(__file__).parent / "data"
+    data_dir = repo_root / "data"
 
     if not data_dir.exists():
         print(f"Data directory not found: {data_dir}")
